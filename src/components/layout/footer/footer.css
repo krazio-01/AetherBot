@@ -1,0 +1,133 @@
+.input-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding-bottom: 1.5rem;
+}
+
+.input-box .footer-input-form {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background-color: var(--components-bg);
+    border-radius: 24px;
+    padding: 0.5rem;
+    margin-inline: 1rem;
+    width: min(750px, 100%);
+}
+
+.footer-input-form .prompt {
+    flex: 1;
+    transition: all 0.15s ease;
+}
+
+.footer-input-form .prompt > div {
+    padding: 0.5rem 0.7rem;
+}
+
+.prompt .promptImg-container {
+    position: relative;
+    width: fit-content;
+}
+
+.promptImg-container .prompt-cancel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    background-color: var(--components-bg);
+    border-radius: 50%;
+    border: none;
+    outline: var(--menu-border);
+    width: 24px;
+    height: 24px;
+}
+
+.promptImg-container .prompt-cancel-btn svg {
+    color: var(--text-clr);
+    font-size: var(--fz-md);
+    cursor: pointer;
+}
+
+.promptImg-container .prompt-cancel-btn.loading {
+    display: none;
+}
+
+.promptImg-container .prompt-img {
+    object-fit: cover;
+    border-radius: 24px;
+}
+
+.promptImg-container .prompt-img.loading {
+    opacity: 0.3;
+}
+
+.promptImg-container .image-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.footer-input-form textarea {
+    appearance: none;
+    font-family: system-ui, sans-serif;
+    padding: 0.5rem 0.7rem;
+    max-height: 20dvh;
+    width: 100%;
+    resize: none;
+    border: none;
+    outline: none;
+    font-size: var(--fz-md);
+    color: var(--text-clr);
+    background: transparent;
+}
+
+.footer-input-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.footer-input-actions .image-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    width: 34px;
+    height: 34px;
+    padding: 0.3rem;
+    border-radius: 50%;
+    transition: background 0.15s ease;
+}
+
+.footer-input-actions .image-label:hover {
+    background: var(--items-hover);
+    cursor: pointer;
+}
+
+.footer-input-actions .send-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    font-size: var(--fz-md);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.footer-input-actions .send-btn:hover {
+    background-color: var(--items-hover);
+}
+
+.footer-input-actions .send-btn.disabled {
+    opacity: 0.7;
+    pointer-events: none;
+}

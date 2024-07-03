@@ -1,0 +1,117 @@
+.chatbox-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 1rem;
+}
+
+.nav-sidebar-toggler {
+    display: none;
+}
+
+.chatbox-header .logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-clr);
+}
+
+.chatbox-header .profile {
+    position: relative;
+    background: transparent;
+}
+
+.profile .profile-summary {
+    list-style: none;
+}
+
+.profile-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.profile-avatar img {
+    max-width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.profile-menu {
+    position: absolute;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    right: 50%;
+    background-color: var(--menu-bg);
+    box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 1000;
+    min-width: 200px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chatbox-header .profile[open] .profile-menu {
+    opacity: 1;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.profile-info img {
+    border-radius: 50%;
+}
+
+.profile-info > div {
+    font-size: var(--fz-sm);
+}
+
+.profile-info > div p:nth-child(1) {
+    font-weight: 600;
+    color: var(--text-clr);
+}
+
+.profile-info > div p:nth-child(2) {
+    color: var(--light-text-clr);
+}
+
+.profile-actions {
+    margin-top: 0.5rem;
+}
+
+.profile-actions button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    width: 100%;
+    font-size: var(--fz-sm);
+    color: var(--text-clr);
+    border-radius: var(--border-radius);
+    border: none;
+    outline: none;
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.profile-actions button:hover {
+    background-color: var(--items-hover);
+}
+
+@media screen and (max-width: 768px) {
+    .nav-sidebar-toggler {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+}

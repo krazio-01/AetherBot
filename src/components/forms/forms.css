@@ -1,0 +1,61 @@
+.auth-form-wrapper .form-input-container {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 2rem;
+}
+
+.auth-form-wrapper .form-input-container svg {
+    color: var(--light-text-clr);
+}
+
+.auth-form-wrapper .form-input-container div {
+    flex: 1;
+}
+
+.auth-form-wrapper .form-input-container div label {
+    color: var(--light-text-clr);
+}
+
+.auth-form-wrapper .form-input-container div input {
+    padding: 0.7rem 0;
+    width: 100%;
+    background: transparent;
+    outline: none;
+    border: none;
+}
+
+.forgot-password {
+    margin-bottom: 1.5rem;
+    font-size: var(--fz-sm);
+}
+
+.forgot-password a {
+    color: var(--blue);
+}
+
+.auth-form-wrapper form button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    background-color: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.7rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-inline: auto;
+}
+
+.auth-form-wrapper form button.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.auth-form-wrapper form button:hover {
+    background-color: var(--blue-hover);
+}

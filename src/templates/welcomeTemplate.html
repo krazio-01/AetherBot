@@ -1,0 +1,76 @@
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #e0d7d0;
+            border-radius: 7px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .container .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h2 {
+            color: #000;
+        }
+
+        .content p {
+            color: #666;
+            margin-top: 1rem;
+        }
+
+        .footer p {
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Thank you for contacting us</h2>
+        </div>
+        <div class="content">
+            <p>Dear {{name}},</p>
+            <div>
+                <p>
+                    Welcome to work-k-lock! We're thrilled to have you as a member of
+                    our community.
+                </p>
+                <p>
+                    To get started, simply log in to your account using the credentials
+                    you provided during the registration process and start using our
+                    platform right away!
+                </p>
+                <p>
+                    If you have any questions or need assistance, feel free to reach out
+                    to our support team. We're here to help!
+                </p>
+                <p>
+                    Welcome once again, and we look forward to your active participation
+                    in the wor-k-lock community.
+                </p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Best regards</p>
+            <p>Wor-K-Lock Team</p>
+        </div>
+    </div>
+</body>
+
+</html>

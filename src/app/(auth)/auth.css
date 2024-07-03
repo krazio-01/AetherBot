@@ -1,0 +1,121 @@
+/* singin and signup css */
+.auth-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100svh;
+}
+
+.auth-container .form-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2rem;
+    width: clamp(300px, 55%, 450px);
+    background-color: var(--menu-bg);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.form-container .auth-form-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.form-container .auth-form-header svg {
+    font-size: 1.5rem;
+    color: var(--blue);
+}
+
+.form-container .auth-form-header p {
+    color: var(--light-text-clr);
+}
+
+/* other providers css */
+.other-providers {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.other-providers .providers {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
+}
+
+.providers button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0.5;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: var(--menu-bg);
+    font-size: var(--fz-sm);
+    font-weight: bold;
+    color: var(--text-clr);
+    border: var(--menu-border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.providers button:hover {
+    background-color: var(--items-hover);
+}
+
+.providers button:disabled {
+    background-color: #d0d0d0;
+    cursor: not-allowed;
+}
+
+.providers button:focus {
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.4);
+}
+
+.auth-container .form-container .auth-form-footer {
+    color: var(--text-clr);
+    text-align: center;
+}
+
+/* ---- verify email css ---- */
+.verify-email-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100svh;
+}
+
+.verify-email-main div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.verify-email-main div h1 {
+    color: var(--blue);
+}
+
+.verify-email-main a {
+    display: inline-block;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.7rem 1rem;
+    border-radius: var(--border-radius);
+    background-color: var(--blue);
+    transition: all 0.3s ease;
+}
+
+.verify-email-main a:hover {
+    background-color: var(--blue-hover);
+}

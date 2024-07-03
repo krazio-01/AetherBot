@@ -1,0 +1,67 @@
+.history-item {
+    position: relative;
+    width: 100%;
+}
+
+.history-item .history-link {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    gap: 0.5rem;
+    border-radius: var(--border-radius);
+    color: var(--light-text-clr);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.history-item .history-link.active {
+    background-color: var(--items-hover);
+    color: var(--text-clr);
+}
+
+.history-item .history-link .chat-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+    max-width: 90%;
+}
+
+.history-item .history-link svg {
+    flex-shrink: 0;
+}
+
+.history-item .history-link span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.history-item .history-link #three-dots {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    opacity: 0;
+    visibility: none;
+    transition: all 0.15s ease;
+}
+
+.history-item .history-link:hover {
+    background-color: var(--items-hover);
+    color: var(--text-clr);
+}
+
+.history-item .history-link:hover #three-dots {
+    opacity: 0.5;
+    visibility: visible;
+}
+
+.history-item .history-link #three-dots:hover {
+    opacity: 1;
+}
+
+.history-item.menu-open .history-link #three-dots {
+    opacity: 1;
+    visibility: visible;
+}

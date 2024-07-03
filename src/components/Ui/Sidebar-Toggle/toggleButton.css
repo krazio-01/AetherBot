@@ -1,0 +1,17 @@
+.sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    color: var(--blue);
+    padding: 0.3rem !important;
+    background: transparent;
+    border-radius: 50%;
+    font-size: 1.7rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background-color: var(--items-hover);
+}
