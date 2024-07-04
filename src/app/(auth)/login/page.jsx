@@ -37,7 +37,6 @@ const Page = () => {
 
         if (result?.error) {
             setLoading(false);
-            console.log("result: ", result);
             throw result.error;
         }
 

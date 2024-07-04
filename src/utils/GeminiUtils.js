@@ -75,7 +75,6 @@ const generateTextFromImageAndPrompt = async (prompt, image) => {
         const { response } = await model.generateContent([prompt, imageObj]);
         return response.text();
     } catch (error) {
-        console.log("error inside generateTextFromImageAndPrompt", error);
         throw new Error(error);
     }
 };

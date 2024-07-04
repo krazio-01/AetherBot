@@ -69,7 +69,7 @@ const Footer = () => {
                 imageUrl: data.imgUrl,
             }));
         } catch (error) {
-            console.error("Error uploading image:", error);
+            toast.error(error.response?.data?.message);
         } finally {
             e.target.value = "";
             setUploadState((prevState) => ({

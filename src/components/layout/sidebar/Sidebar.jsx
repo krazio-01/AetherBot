@@ -58,7 +58,6 @@ const Sidebar = () => {
                 const { data } = await axios.get("/api/chat/fetchChats");
                 setChats(data.chats);
             } catch (error) {
-                console.log(error);
                 toast.error(error.response?.data?.message);
             } finally {
                 setChatsLoading(false);
