@@ -34,3 +34,16 @@ export async function middleware(request) {
 
     return NextResponse.next();
 }
+
+export const config = {
+    matcher: [
+        "/",
+        "/chat",
+        "/chat/:chatId*",
+        "/login",
+        "/register",
+        "/verifyEmail",
+        "/forgot-password/request",
+        "/forgot-password/change",
+    ],
+};
