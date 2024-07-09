@@ -1,13 +1,12 @@
 "use client";
 import React, { useRef, useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 import { toast } from "sonner";
+import AuthProviderBtn from "@/components/Ui/AuthProviderBtn/AuthProviderBtn";
 import { MdEmail } from "react-icons/md";
-import { FaUser, FaUserCircle, FaLock, FaGithub } from "react-icons/fa";
+import { FaUser, FaUserCircle, FaLock, FaGithub, FaDiscord } from "react-icons/fa";
 import axios from "axios";
 import AuthForm from "@/components/forms/AuthForm";
-import { FcGoogle } from "react-icons/fc";
 import Avatar1 from "../../../../public/images/avatar1.jpeg";
 import Avatar2 from "../../../../public/images/avatar2.jpeg";
 import Avatar3 from "../../../../public/images/avatar3.jpeg";
@@ -38,8 +37,7 @@ const Page = () => {
             setLoading(true);
 
             const avatars = [Avatar1, Avatar2, Avatar3, Avatar4];
-            const randomAvatar =
-                avatars[Math.floor(Math.random() * avatars.length)];
+            const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
 
             const { data } = await axios.post("/api/auth/signup", {
                 name: nameRef.current.value,
@@ -88,25 +86,19 @@ const Page = () => {
                     </div>
 
                     <div className="providers">
-                        <button
-                            type="button"
-                            className="google-login-button"
-                            onClick={() => signIn("google")}
-                            disabled={loading}
-                        >
-                            <FcGoogle />
-                            <span>Google</span>
-                        </button>
+                        <AuthProviderBtn
+                            loading={loading}
+                            provider="discord"
+                            btnText="Discord"
+                            icon={<FaDiscord />}
+                        />
 
-                        <button
-                            type="button"
-                            className="github-login-button"
-                            onClick={() => signIn("github")}
-                            disabled={loading}
-                        >
-                            <FaGithub />
-                            <span>GitHub</span>
-                        </button>
+                        <AuthProviderBtn
+                            loading={loading}
+                            provider="github"
+                            btnText="Github"
+                            icon={<FaGithub />}
+                        />
                     </div>
                 </div>
 

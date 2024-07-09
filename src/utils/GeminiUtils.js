@@ -16,15 +16,10 @@ const generationConfig = {
     topP: 0.95,
     topK: 64,
     maxOutputTokens: 2048,
-    // maxOutputTokens: 4096,
     responseMimeType: "text/plain",
 };
 
 const safetySettings = [
-    {
-        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-    },
     {
         category: HarmCategory.HARM_CATEGORY_HARASSMENT,
         threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,

@@ -3,9 +3,9 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import AuthForm from "@/components/forms/AuthForm";
 import { signIn } from "next-auth/react";
-import { FaLock, FaGithub } from "react-icons/fa";
+import AuthProviderBtn from "@/components/Ui/AuthProviderBtn/AuthProviderBtn";
+import { FaLock, FaGithub, FaDiscord } from "react-icons/fa";
 import { FiLogIn } from "react-icons/fi";
-import { FcGoogle } from "react-icons/fc";
 import { MdEmail } from "react-icons/md";
 import "../auth.css";
 
@@ -71,31 +71,24 @@ const Page = () => {
                     </div>
 
                     <div className="providers">
-                        <button
-                            type="button"
-                            className="google-login-button"
-                            onClick={() => signIn("google")}
-                            disabled={loading}
-                        >
-                            <FcGoogle />
-                            <span>Google</span>
-                        </button>
+                        <AuthProviderBtn
+                            loading={loading}
+                            provider="discord"
+                            btnText="Discord"
+                            icon={<FaDiscord  />}
+                        />
 
-                        <button
-                            type="button"
-                            className="github-login-button"
-                            onClick={() => signIn("github")}
-                            disabled={loading}
-                        >
-                            <FaGithub />
-                            <span>GitHub</span>
-                        </button>
+                        <AuthProviderBtn
+                            loading={loading}
+                            provider="github"
+                            btnText="Github"
+                            icon={<FaGithub />}
+                        />
                     </div>
                 </div>
 
                 <p className="auth-form-footer">
-                    Don&apos;t have an account?{" "}
-                    <Link href="/register">Sign Up</Link>
+                    Don&apos;t have an account? <Link href="/register">Sign Up</Link>
                 </p>
             </div>
         </div>

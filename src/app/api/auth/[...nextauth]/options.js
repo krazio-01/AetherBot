@@ -1,6 +1,6 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
+import DiscordProvider from "next-auth/providers/discord";
 import bcrypt from "bcrypt";
 import connectToDB from "@/utils/dbConnect";
 import User from "@/models/userModel";
@@ -27,32 +27,25 @@ export const authOptions = {
 
                 if (!user) throw new Error("This account is not registered");
 
-                if (!user.isVerified)
-                    throw new Error("Please verify your email");
+                if (!user.isVerified) throw new Error("Please verify your email");
 
                 if (!user.password) {
                     const salt = await bcrypt.genSalt(10);
-                    const hashedPassword = await bcrypt.hash(
-                        credentials.password,
-                        salt
-                    );
+                    const hashedPassword = await bcrypt.hash(credentials.password, salt);
                     user.password = hashedPassword;
 
                     await user.save();
                 } else {
-                    const checkPassword = await bcrypt.compare(
-                        credentials.password,
-                        user.password
-                    );
+                    const checkPassword = await bcrypt.compare(credentials.password, user.password);
                     if (!checkPassword) throw new Error("Invalid credentials");
                 }
 
                 return user;
             },
         }),
-        GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        DiscordProvider({
+            clientId: process.env.DISCORD_CLIENT_ID,
+            clientSecret: process.env.DISCORD_CLIENT_SECRET,
         }),
         GitHubProvider({
             clientId: process.env.GITHUB_CLIENT_ID,
@@ -61,7 +54,7 @@ export const authOptions = {
     ],
     callbacks: {
         async signIn({ account, profile }) {
-            if (account?.provider === "google") {
+            if (account?.provider === "discord") {
                 await connectToDB();
 
                 try {
@@ -70,15 +63,15 @@ export const authOptions = {
                     let user = await User.findOne({ email: profile.email });
                     if (!user) {
                         const newUser = new User({
-                            name: profile.name,
+                            name: profile.username || profile.global_name,
                             email: profile.email,
-                            avatar: profile.picture,
+                            avatar: profile.image_url,
                             isVerified: true,
                         });
                         await newUser.save();
                     } else {
-                        user.name = profile.name;
-                        user.avatar = profile.picture;
+                        user.name = profile.username;
+                        user.avatar = profile.image_url;
                         if (!user.isVerified) {
                             user.verifyToken = undefined;
                             user.verifyTokenExpiry = undefined;
