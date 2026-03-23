@@ -2,24 +2,27 @@ import {
     GoogleGenerativeAI,
     HarmCategory,
     HarmBlockThreshold,
-} from "@google/generative-ai";
+    Content,
+    GenerationConfig,
+    SafetySetting,
+} from '@google/generative-ai';
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey: string = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: 'gemini-2.5-flash',
 });
 
-const generationConfig = {
+const generationConfig: GenerationConfig = {
     temperature: 1,
     topP: 0.95,
     topK: 64,
     maxOutputTokens: 2048,
-    responseMimeType: "text/plain",
+    responseMimeType: 'text/plain',
 };
 
-const safetySettings = [
+const safetySettings: SafetySetting[] = [
     {
         category: HarmCategory.HARM_CATEGORY_HARASSMENT,
         threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
@@ -34,7 +37,7 @@ const safetySettings = [
     },
 ];
 
-const multiTurnConversation = async (prompt, history) => {
+const multiTurnConversation = async (prompt: string, history?: Content[]): Promise<string> => {
     try {
         const chatSession = model.startChat({
             generationConfig,
@@ -46,31 +49,30 @@ const multiTurnConversation = async (prompt, history) => {
 
         return response.text();
     } catch (error) {
-        throw new Error(error);
+        throw new Error(error instanceof Error ? error.message : 'Failed to generate conversation');
     }
 };
 
-const generateTextFromImageAndPrompt = async (prompt, image) => {
+const generateTextFromImageAndPrompt = async (prompt: string, image: File | Blob): Promise<string> => {
     try {
-        if(!image) throw new Error("No image provided");
-        
+        if (!image) throw new Error('No image provided');
+
         const imageData = await image.arrayBuffer();
         const buffer = Buffer.from(imageData);
 
-        // Convert the image data to base64
-        const base64String = buffer.toString("base64");
+        const base64String = buffer.toString('base64');
 
         const imageObj = {
             inlineData: {
                 data: base64String,
-                mimeType: "image/jpg",
+                mimeType: image.type || 'image/jpeg',
             },
         };
 
         const { response } = await model.generateContent([prompt, imageObj]);
         return response.text();
     } catch (error) {
-        throw new Error(error);
+        throw new Error(error instanceof Error ? error.message : 'Failed to generate text from image');
     }
 };
 
