@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import User from "@/models/userModel";
-import connectToDB from "@/utils/dbConnect.js";
+import connectToDB from "@/utils/dbConnect";
 import sendEmail from "@/utils/sendMail";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcrypt";
