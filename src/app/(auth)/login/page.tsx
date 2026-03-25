@@ -1,26 +1,27 @@
-"use client";
-import { useRef, useState } from "react";
-import Link from "next/link";
-import AuthForm from "@/components/forms/AuthForm";
-import { signIn } from "next-auth/react";
-import AuthProviderBtn from "@/components/Ui/AuthProviderBtn/AuthProviderBtn";
-import { FaLock, FaGithub, FaDiscord } from "react-icons/fa";
-import { FiLogIn } from "react-icons/fi";
-import { MdEmail } from "react-icons/md";
-import "../auth.css";
+'use client';
+import { useRef, useState } from 'react';
+import Link from 'next/link';
+import AuthForm from '@/components/forms/AuthForm';
+import { signIn } from 'next-auth/react';
+import AuthProviderBtn from '@/components/Ui/AuthProviderBtn/AuthProviderBtn';
+import { FaLock, FaGithub, FaDiscord } from 'react-icons/fa';
+import { FiLogIn } from 'react-icons/fi';
+import { MdEmail } from 'react-icons/md';
+import { IAuthField } from '@/types';
+import '../auth.css';
 
 const Page = () => {
     const [loading, setLoading] = useState(false);
 
-    const emailRef = useRef(null);
-    const passwordRef = useRef(null);
+    const emailRef = useRef<HTMLInputElement>(null);
+    const passwordRef = useRef<HTMLInputElement>(null);
 
-    const formFields = [
-        { name: "email", label: "Email", type: "email", icon: <MdEmail /> },
+    const formFields: IAuthField[] = [
+        { name: 'email', label: 'Email', type: 'email', icon: <MdEmail /> },
         {
-            name: "password",
-            label: "Password",
-            type: "password",
+            name: 'password',
+            label: 'Password',
+            type: 'password',
             icon: <FaLock />,
         },
     ];
@@ -29,10 +30,10 @@ const Page = () => {
     const handleLogin = async () => {
         setLoading(true);
 
-        const result = await signIn("credentials", {
+        const result = await signIn('credentials', {
             redirect: false,
-            identifier: emailRef.current.value,
-            password: passwordRef.current.value,
+            identifier: emailRef.current?.value || '',
+            password: passwordRef.current?.value || '',
         });
 
         if (result?.error) {
@@ -40,9 +41,10 @@ const Page = () => {
             throw result.error;
         }
 
-        if (result?.url) return "Login successful";
+        if (result?.url) return 'Login successful';
 
         setLoading(false);
+        return 'Process complete';
     };
 
     return (
@@ -71,19 +73,9 @@ const Page = () => {
                     </div>
 
                     <div className="providers">
-                        <AuthProviderBtn
-                            loading={loading}
-                            provider="discord"
-                            btnText="Discord"
-                            icon={<FaDiscord  />}
-                        />
+                        <AuthProviderBtn loading={loading} provider="discord" btnText="Discord" icon={<FaDiscord />} />
 
-                        <AuthProviderBtn
-                            loading={loading}
-                            provider="github"
-                            btnText="Github"
-                            icon={<FaGithub />}
-                        />
+                        <AuthProviderBtn loading={loading} provider="github" btnText="Github" icon={<FaGithub />} />
                     </div>
                 </div>
 
