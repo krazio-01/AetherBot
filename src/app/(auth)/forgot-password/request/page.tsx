@@ -1,33 +1,29 @@
-"use client";
-import { useRef, useState } from "react";
-import axios from "axios";
-import AuthForm from "@/components/forms/AuthForm";
-import { MdLockReset } from "react-icons/md";
-import { MdEmail } from "react-icons/md";
-import "../../auth.css";
+'use client';
+import { useRef, useState } from 'react';
+import axios, { AxiosError } from 'axios';
+import AuthForm from '@/components/forms/AuthForm';
+import { MdLockReset, MdEmail } from 'react-icons/md';
+import { IAuthField } from '@/types';
+import '../../auth.css';
 
 const Page = () => {
     const [loading, setLoading] = useState(false);
 
-    const emailRef = useRef(null);
+    const emailRef = useRef<HTMLInputElement>(null);
     const refs = [emailRef];
 
-    const formFields = [
-        { name: "email", label: "Email", type: "email", icon: <MdEmail /> },
-    ];
+    const formFields: IAuthField[] = [{ name: 'email', label: 'Email', type: 'email', icon: <MdEmail /> }];
 
     const handleChangeRequest = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.post(
-                "/api/auth/forgot-password/request",
-                {
-                    email: emailRef.current.value,
-                }
-            );
+            const { data } = await axios.post('/api/auth/forgot-password/request', {
+                email: emailRef.current?.value || '',
+            });
             return data.message;
         } catch (error) {
-            throw error.response.data.message;
+            if (error instanceof AxiosError) throw error.response?.data?.message || 'Failed to send reset email.';
+            throw 'An unexpected error occurred.';
         } finally {
             setLoading(false);
         }
@@ -41,12 +37,11 @@ const Page = () => {
                     <h2>Reset your password</h2>
                     <p
                         style={{
-                            fontSize: "var(--fz-sm)",
-                            textAlign: "center",
+                            fontSize: 'var(--fz-sm)',
+                            textAlign: 'center',
                         }}
                     >
-                        Enter your email address and we will send you
-                        instructions to reset your password.
+                        Enter your email address and we will send you instructions to reset your password.
                     </p>
                 </div>
 

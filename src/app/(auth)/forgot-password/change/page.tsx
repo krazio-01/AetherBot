@@ -1,57 +1,51 @@
-"use client";
-import { useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
-import AuthForm from "@/components/forms/AuthForm";
-import axios from "axios";
-import { MdLockReset } from "react-icons/md";
-import { FaLock } from "react-icons/fa";
-import "../../auth.css";
+'use client';
+import { useRef, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import AuthForm from '@/components/forms/AuthForm';
+import axios, { AxiosError } from 'axios';
+import { MdLockReset } from 'react-icons/md';
+import { FaLock } from 'react-icons/fa';
+import { IAuthField } from '@/types';
+import '../../auth.css';
 
 const PageInner = () => {
     const [loading, setLoading] = useState(false);
 
-    const newPasswordRef = useRef(null);
-    const confirmNewPasswordRef = useRef(null);
+    const newPasswordRef = useRef<HTMLInputElement>(null);
+    const confirmNewPasswordRef = useRef<HTMLInputElement>(null);
 
-    const formFields = [
+    const formFields: IAuthField[] = [
         {
-            name: "password",
-            label: "New Password",
-            type: "password",
+            name: 'password',
+            label: 'New Password',
+            type: 'password',
             icon: <FaLock />,
         },
         {
-            name: "confirm-password",
-            label: "Password",
-            type: "password",
+            name: 'confirm-password',
+            label: 'Password',
+            type: 'password',
             icon: <FaLock />,
         },
     ];
     const refs = [newPasswordRef, confirmNewPasswordRef];
 
     const searchParams = useSearchParams();
-    const token = searchParams.get("token");
+    const token = searchParams.get('token');
 
     const handleResetPassword = async () => {
-        if (
-            newPasswordRef.current.value !== confirmNewPasswordRef.current.value
-        ) {
-            throw "Passwords do not match";
-        }
+        const newPassword = newPasswordRef.current?.value || '';
+        const confirmPassword = confirmNewPasswordRef.current?.value || '';
+
+        if (newPassword !== confirmPassword) throw 'Passwords do not match';
 
         try {
             setLoading(true);
-            const { data } = await axios.post(
-                "/api/auth/forgot-password/change",
-                {
-                    token,
-                    newPassword: newPasswordRef.current.value,
-                }
-            );
+            const { data } = await axios.post('/api/auth/forgot-password/change', { token, newPassword });
             return data.message;
         } catch (error) {
-            throw error.response.data.message;
+            if (error instanceof AxiosError) throw error.response?.data?.message || 'Failed to reset password.';
+            throw 'An unexpected error occurred.';
         } finally {
             setLoading(false);
         }
@@ -65,8 +59,8 @@ const PageInner = () => {
                     <h2>Reset your password</h2>
                     <p
                         style={{
-                            fontSize: "var(--fz-sm)",
-                            textAlign: "center",
+                            fontSize: 'var(--fz-sm)',
+                            textAlign: 'center',
                         }}
                     >
                         Enter a new password below to reset your password
