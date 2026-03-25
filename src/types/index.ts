@@ -16,6 +16,14 @@ export interface IApiError {
     error: string;
 }
 
+// Auth types
+export interface IAuthField {
+    name: string;
+    label: string;
+    type: string;
+    icon?: ReactNode;
+}
+
 // Chat types
 export interface IMessagePart {
     text: string;
