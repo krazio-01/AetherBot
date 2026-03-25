@@ -1,9 +1,23 @@
-"use client";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { FaArrowRight } from "react-icons/fa";
-import "./forms.css";
+'use client';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { FaArrowRight } from 'react-icons/fa';
+import { SyntheticEvent, RefObject } from 'react';
+import { IAuthField } from '@/types';
+import './forms.css';
+
+interface IAuthFormProps {
+    formFields: IAuthField[];
+    refs: RefObject<HTMLInputElement | null>[];
+    loading: boolean;
+    onSubmit: () => Promise<string>;
+    loadingText: string;
+    redirectUrl: string;
+    additionalToast?: () => void;
+    submitButtonText: string;
+    forgotPassword?: boolean;
+}
 
 const AuthForm = ({
     formFields,
@@ -14,11 +28,11 @@ const AuthForm = ({
     redirectUrl,
     additionalToast,
     submitButtonText,
-    forgotPassword
-}) => {
+    forgotPassword,
+}: IAuthFormProps) => {
     const router = useRouter();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         toast.promise(
@@ -29,9 +43,9 @@ const AuthForm = ({
             }),
             {
                 loading: loadingText,
-                success: (message) => message,
-                error: (message) => message,
-            }
+                success: (message: string) => message,
+                error: (message: string) => message,
+            },
         );
     };
 
@@ -54,11 +68,7 @@ const AuthForm = ({
                     </div>
                 )}
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className={loading ? "disabled" : ""}
-                >
+                <button type="submit" disabled={loading} className={loading ? 'disabled' : ''}>
                     <span>{submitButtonText}</span>
                     <FaArrowRight />
                 </button>
