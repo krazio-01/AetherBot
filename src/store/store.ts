@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { IChat, IMessage } from '@/types/chat';
+import { IChat, IMessage } from '@/types';
 
 interface IAppState {
     input: string;

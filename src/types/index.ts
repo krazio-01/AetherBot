@@ -1,3 +1,22 @@
+import { ReactNode } from "react";
+
+// API_response
+export interface IApiResponse<T = any> {
+    success: boolean;
+    message: string;
+    data: T | null;
+    status: number;
+    error?: string | null;
+}
+
+export interface IApiError {
+    success: false;
+    message: string;
+    status: number;
+    error: string;
+}
+
+// Chat types
 export interface IMessagePart {
     text: string;
 }
