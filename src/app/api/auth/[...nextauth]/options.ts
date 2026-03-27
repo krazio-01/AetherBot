@@ -5,21 +5,16 @@ import DiscordProvider from 'next-auth/providers/discord';
 import bcrypt from 'bcrypt';
 import connectToDB from '@/utils/dbConnect';
 import User from '@/models/userModel';
+import { ISessionUser } from '@/types';
 
 declare module 'next-auth' {
     interface Session {
-        user: {
-            _id?: string;
-            avatar?: string;
-        } & DefaultSession['user'];
+        user: ISessionUser & DefaultSession['user'];
     }
 }
 
 declare module 'next-auth/jwt' {
-    interface JWT {
-        _id?: string;
-        avatar?: string;
-    }
+    interface JWT extends ISessionUser { }
 }
 
 interface ICustomProfile extends Profile {

@@ -24,6 +24,13 @@ export interface IAuthField {
     icon?: ReactNode;
 }
 
+export interface ISessionUser {
+    _id: string;
+    name?: string | null;
+    email?: string | null;
+    avatar?: string | null;
+}
+
 // Chat types
 export interface IMessagePart {
     text: string;
