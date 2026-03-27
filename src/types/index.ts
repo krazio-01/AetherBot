@@ -44,3 +44,10 @@ export interface IChat {
     title: string;
     createdAt?: string | Date;
 }
+
+// rest of the types
+export interface IMenuItem {
+    icon?: ReactNode;
+    content: ReactNode;
+    onClick?: () => void;
+}

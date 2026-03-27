@@ -1,6 +1,16 @@
-import "./menu.css";
+import { IMenuItem } from '@/types';
+import './menu.css';
 
-const Menu = ({ position, onClose, items }) => {
+interface IMenuProps {
+    position: {
+        top: number | string;
+        left: number | string;
+    };
+    onClose: () => void;
+    items: IMenuItem[];
+}
+
+const Menu = ({ position, onClose, items }: IMenuProps) => {
     return (
         <>
             <div className="menu-backdrop" onClick={onClose} />

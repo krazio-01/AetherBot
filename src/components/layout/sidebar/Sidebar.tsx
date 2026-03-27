@@ -1,19 +1,20 @@
-"use client";
-import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import useAppStore from "@/store/store";
-import axios from "axios";
-import { useTheme } from "next-themes";
-import Chats from "@/components/layout/sidebar/chats/Chats";
-import ToggleButton from "@/components/Ui/Sidebar-Toggle/ToggleButton";
-import Menu from "@/components/menu/Menu";
-import { Oval } from "react-loader-spinner";
-import { toast } from "sonner";
-import { MdDarkMode } from "react-icons/md";
-import { FaPlus } from "react-icons/fa6";
-import { IoSettingsOutline } from "react-icons/io5";
-import "./sidebar.css";
+'use client';
+import { useState, useEffect, useRef, MouseEvent, ChangeEvent } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import useAppStore from '@/store/store';
+import axios, { AxiosError } from 'axios';
+import { useTheme } from 'next-themes';
+import Chats from '@/components/layout/sidebar/chats/Chats';
+import ToggleButton from '@/components/Ui/Sidebar-Toggle/ToggleButton';
+import Menu from '@/components/menu/Menu';
+import { Oval } from 'react-loader-spinner';
+import { toast } from 'sonner';
+import { MdDarkMode } from 'react-icons/md';
+import { FaPlus } from 'react-icons/fa6';
+import { IoSettingsOutline } from 'react-icons/io5';
+import { IMenuItem } from '@/types';
+import './sidebar.css';
 
 const Sidebar = () => {
     const chats = useAppStore((state) => state.chats);
@@ -22,15 +23,20 @@ const Sidebar = () => {
     const removeChat = useAppStore((state) => state.removeChat);
     const sidebarIsOpen = useAppStore((state) => state.sidebarIsOpen);
 
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
-    const [chatsLoading, setChatsLoading] = useState(true);
+    const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+    const [chatsLoading, setChatsLoading] = useState<boolean>(true);
+
     const { theme, setTheme } = useTheme();
-    const settingsRef = useRef(null);
+
+    const settingsRef = useRef<HTMLButtonElement>(null);
     const params = useParams();
 
-    const toggleMenu = (e) => {
+    const toggleMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
+
+        if (!settingsRef.current) return;
+
         const rect = settingsRef.current.getBoundingClientRect();
         const viewportHeight = window.innerHeight;
         const menuHeight = 42;
@@ -42,10 +48,7 @@ const Sidebar = () => {
             if (left < 0) left = 10;
         }
 
-        const top =
-            rect.bottom + menuHeight > viewportHeight
-                ? rect.top - menuHeight
-                : rect.bottom;
+        const top = rect.bottom + menuHeight > viewportHeight ? rect.top - menuHeight : rect.bottom;
 
         setMenuPosition({ top, left });
         setIsMenuOpen((prev) => !prev);
@@ -55,10 +58,11 @@ const Sidebar = () => {
         const fetchChats = async () => {
             try {
                 setChatsLoading(true);
-                const { data } = await axios.get("/api/chat/fetchChats");
+                const { data } = await axios.get('/api/chat/fetchChats');
                 setChats(data.chats);
             } catch (error) {
-                toast.error(error.response?.data?.message);
+                if (error instanceof AxiosError) toast.error(error.response?.data?.message || 'Failed to fetch chats');
+                else toast.error('An unexpected error occurred');
             } finally {
                 setChatsLoading(false);
             }
@@ -67,7 +71,7 @@ const Sidebar = () => {
         fetchChats();
     }, [isNewChat, setChats]);
 
-    const menuItems = [
+    const menuItems: IMenuItem[] = [
         {
             icon: <MdDarkMode />,
             content: (
@@ -75,10 +79,10 @@ const Sidebar = () => {
                     <span>Dark Mode</span>
                     <input
                         type="checkbox"
-                        onChange={(e) =>
-                            setTheme(e.target.checked ? "dark" : "light")
+                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            setTheme(e.target.checked ? 'dark' : 'light')
                         }
-                        checked={theme === "dark"}
+                        checked={theme === 'dark'}
                     />
                 </div>
             ),
@@ -86,7 +90,7 @@ const Sidebar = () => {
     ];
 
     return (
-        <div className={`sidebar ${sidebarIsOpen ? "active" : ""}`}>
+        <div className={`sidebar ${sidebarIsOpen ? 'active' : ''}`}>
             <div className="sidebar-header">
                 <ToggleButton />
 
@@ -104,12 +108,7 @@ const Sidebar = () => {
                             <div className="history">
                                 <ul>
                                     {chats.map((chat, index) => (
-                                        <Chats
-                                            key={index}
-                                            chat={chat}
-                                            removeChat={removeChat}
-                                            params={params}
-                                        />
+                                        <Chats key={index} chat={chat} removeChat={removeChat} params={params} />
                                     ))}
                                 </ul>
                             </div>
@@ -137,13 +136,7 @@ const Sidebar = () => {
                     <span>Settings</span>
                 </button>
 
-                {isMenuOpen && (
-                    <Menu
-                        position={menuPosition}
-                        onClose={() => setIsMenuOpen(false)}
-                        items={menuItems}
-                    />
-                )}
+                {isMenuOpen && <Menu position={menuPosition} onClose={() => setIsMenuOpen(false)} items={menuItems} />}
             </div>
         </div>
     );
