@@ -14,12 +14,10 @@ import './chats.css';
 interface ChatsProps {
     chat: IChat;
     removeChat: (id: string) => void;
-    params: {
-        chatId?: string | string[];
-    };
+    isActive: boolean;
 }
 
-const Chats = ({ chat, removeChat, params }: ChatsProps) => {
+const Chats = ({ chat, removeChat, isActive }: ChatsProps) => {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
@@ -87,7 +85,7 @@ const Chats = ({ chat, removeChat, params }: ChatsProps) => {
         <li className={`history-item ${isMenuOpen ? 'menu-open' : ''}`}>
             <Link
                 href={`/chat/${chat.referenceId}`}
-                className={`history-link ${params.chatId === chat.referenceId ? 'active' : ''}`}
+                className={`history-link ${isActive ? 'active' : ''}`}
             >
                 <div className="chat-title">
                     <MdChatBubbleOutline />

@@ -79,9 +79,7 @@ const Sidebar = () => {
                     <span>Dark Mode</span>
                     <input
                         type="checkbox"
-                        onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                            setTheme(e.target.checked ? 'dark' : 'light')
-                        }
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setTheme(e.target.checked ? 'dark' : 'light')}
                         checked={theme === 'dark'}
                     />
                 </div>
@@ -107,8 +105,13 @@ const Sidebar = () => {
                             <span>Chats</span>
                             <div className="history">
                                 <ul>
-                                    {chats.map((chat, index) => (
-                                        <Chats key={index} chat={chat} removeChat={removeChat} params={params} />
+                                    {chats.map((chat) => (
+                                        <Chats
+                                            key={chat?.referenceId}
+                                            chat={chat}
+                                            removeChat={removeChat}
+                                            isActive={params?.chatId === chat.referenceId}
+                                        />
                                     ))}
                                 </ul>
                             </div>
