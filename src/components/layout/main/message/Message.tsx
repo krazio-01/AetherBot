@@ -1,21 +1,39 @@
-import React, { memo, useCallback } from "react";
-import Image from "next/image";
-import Markdown from "react-markdown";
-import SyntaxHighlighter from "react-syntax-highlighter";
-import clipboardCopy from "clipboard-copy";
-import { ThreeDots } from "react-loader-spinner";
-import { toast } from "sonner";
-import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
-import { FaRegCopy } from "react-icons/fa6";
-import { MdErrorOutline } from "react-icons/md";
-import LogoImage from "../../../../../public/images/logo.png";
-import FallbackImg from "../../../../../public/images/default.webp";
-import "./message.css";
+import React, { memo, useCallback } from 'react';
+import Image, { StaticImageData } from 'next/image';
+import Markdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import clipboardCopy from 'clipboard-copy';
+import { ThreeDots } from 'react-loader-spinner';
+import { toast } from 'sonner';
+import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { FaRegCopy } from 'react-icons/fa6';
+import { MdErrorOutline } from 'react-icons/md';
+import LogoImage from '../../../../../public/images/logo.png';
+import FallbackImg from '../../../../../public/images/default.webp';
+import { ISessionUser, IMessage } from '@/types';
+import './message.css';
 
-const Message = ({ user, message, loading }) => {
-    const handleCopyClick = useCallback((content) => {
+interface IMessageProps {
+    user?: ISessionUser | null;
+    message: IMessage;
+    loading?: boolean;
+}
+
+interface IMarkDownBlockProps {
+    part: { text: string };
+    handleCopyClick: (content: string) => void;
+    role: 'user' | 'model';
+}
+
+interface ILoadingComponentProps {
+    user?: ISessionUser | null;
+    message: IMessage;
+}
+
+const Message = ({ user, message, loading }: IMessageProps) => {
+    const handleCopyClick = useCallback((content: string) => {
         clipboardCopy(content);
-        toast("Code copied to clipboard!");
+        toast('Code copied to clipboard!');
     }, []);
 
     if (loading) return <LoadingComponent user={user} message={message} />;
@@ -23,14 +41,10 @@ const Message = ({ user, message, loading }) => {
     return (
         <div className={`message-${message.role}`}>
             <Image
-                src={
-                    message.role === "user"
-                        ? user?.avatar || FallbackImg
-                        : LogoImage
-                }
+                src={message.role === 'user' ? user?.avatar || FallbackImg : (LogoImage as StaticImageData)}
                 alt={message.role}
-                width={message.role === "user" ? 30 : 45}
-                height={message.role === "user" ? 30 : 45}
+                width={message.role === 'user' ? 30 : 45}
+                height={message.role === 'user' ? 30 : 45}
             />
             <div className="message-content">
                 {message?.isError ? (
@@ -42,9 +56,7 @@ const Message = ({ user, message, loading }) => {
                     ))
                 ) : (
                     <>
-                        {message?.image && (
-                            <img src={message.image} alt="image" />
-                        )}
+                        {message?.image && <img src={message.image} alt="image" />}
                         {message.parts.map((part, index) => (
                             <MarkDownBlock
                                 key={index}
@@ -60,13 +72,13 @@ const Message = ({ user, message, loading }) => {
     );
 };
 
-const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, role }) {
-    return role === "model" ? (
+const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, role }: IMarkDownBlockProps) {
+    return role === 'model' ? (
         <Markdown
             components={{
-                code({ node, inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || "");
-                    const content = String(children).replace(/\n$/, "");
+                code({ node, inline, className, children, ...props }: any) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    const content = String(children).replace(/\n$/, '');
 
                     return !inline && match ? (
                         <div className="code-block">
@@ -74,10 +86,7 @@ const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, r
                                 <div>
                                     <span>{match[1]}</span>
                                 </div>
-                                <button
-                                    className="copy-button"
-                                    onClick={() => handleCopyClick(content)}
-                                >
+                                <button className="copy-button" onClick={() => handleCopyClick(content)}>
                                     <FaRegCopy />
                                 </button>
                             </div>
@@ -87,11 +96,11 @@ const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, r
                                 PreTag="div"
                                 showLineNumbers
                                 lineNumberStyle={{
-                                    minWidth: "2rem",
-                                    paddingRight: "1rem",
-                                    userSelect: "none",
+                                    minWidth: '2rem',
+                                    paddingRight: '1rem',
+                                    userSelect: 'none',
                                 }}
-                                customStyle={{ padding: "1rem" }}
+                                customStyle={{ padding: '1rem' }}
                                 {...props}
                             >
                                 {content}
@@ -114,19 +123,12 @@ const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, r
     );
 });
 
-const LoadingComponent = ({ user, message }) => (
+const LoadingComponent = ({ user, message }: ILoadingComponentProps) => (
     <>
         <div className="message-user">
-            <Image
-                src={user?.avatar || FallbackImg}
-                alt="User Avatar"
-                width={30}
-                height={30}
-            />
+            <Image src={user?.avatar || FallbackImg} alt="User Avatar" width={30} height={30} />
             <div className="message-content">
-                {message?.image && (
-                    <img src={message.image} alt="Loading image" />
-                )}
+                {message?.image && <img src={message.image} alt="Loading image" />}
                 {message.parts.map((part, index) => (
                     <p key={index}>{part.text}</p>
                 ))}
@@ -134,15 +136,9 @@ const LoadingComponent = ({ user, message }) => (
         </div>
 
         <div className="message-model">
-            <Image src={LogoImage} alt="Logo" width={45} height={45} />
+            <Image src={LogoImage as StaticImageData} alt="Logo" width={45} height={45} />
             <div className="response-loading">
-                <ThreeDots
-                    visible={true}
-                    height="36"
-                    width="36"
-                    color="var(--blue)"
-                    radius="9"
-                />
+                <ThreeDots visible={true} height="36" width="36" color="var(--blue)" radius="9" />
             </div>
         </div>
     </>
