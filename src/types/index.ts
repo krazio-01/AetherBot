@@ -30,11 +30,10 @@ export interface IMessagePart {
 }
 
 export interface IMessage {
-    _id?: string;
-    chatId?: string;
     role: 'user' | 'model';
     parts: IMessagePart[];
     image?: string;
+    isError?: boolean;
 }
 
 export interface IChat {

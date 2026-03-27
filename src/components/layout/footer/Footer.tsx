@@ -1,15 +1,24 @@
-"use client";
-import { useState, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import useAppStore from "@/store/store";
-import { toast } from "sonner";
-import axios from "axios";
-import { Oval } from "react-loader-spinner";
-import { LuImagePlus } from "react-icons/lu";
-import { IoMdSend } from "react-icons/io";
-import { RxCross2 } from "react-icons/rx";
-import "./footer.css";
+'use client';
+import React, { useState, useRef, ChangeEvent, FormEvent, KeyboardEvent } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import useAppStore from '@/store/store';
+import { toast } from 'sonner';
+import axios, { AxiosError } from 'axios';
+import { Oval } from 'react-loader-spinner';
+import { LuImagePlus } from 'react-icons/lu';
+import { IoMdSend } from 'react-icons/io';
+import { RxCross2 } from 'react-icons/rx';
+import { IMessage } from '@/types';
+import './footer.css';
+
+interface IUploadState {
+    imageLoading: boolean;
+    file: File | null;
+    isImage: string | null;
+    imageUrl: string;
+    abortController: AbortController | null;
+}
 
 const Footer = () => {
     const input = useAppStore((state) => state.input);
@@ -20,35 +29,42 @@ const Footer = () => {
     const messages = useAppStore((state) => state.messages);
     const updateMessages = useAppStore((state) => state.updateMessages);
 
-    const [uploadState, setUploadState] = useState({
+    const [uploadState, setUploadState] = useState<IUploadState>({
         imageLoading: false,
         file: null,
         isImage: null,
-        imageUrl: "",
+        imageUrl: '',
+        abortController: null,
     });
 
-    const { chatId } = useParams();
+    const params = useParams();
+    const chatId = params?.chatId as string | undefined;
     const router = useRouter();
 
-    const textareaRef = useRef(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    const createChatMessage = (role, text, imageUrl = "", isError = false) => ({
+    const createChatMessage = (
+        role: 'user' | 'model',
+        text: string,
+        imageUrl: string = '',
+        isError: boolean = false,
+    ): IMessage => ({
         role,
         parts: [{ text }],
         image: imageUrl,
         isError,
     });
 
-    const handleImageChange = async (e) => {
-        const File = e.target.files[0];
+    const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
 
-        if (!File) return;
+        if (!file) return;
 
-        const imageUrl = URL.createObjectURL(File);
+        const imageUrl = URL.createObjectURL(file);
         setUploadState((prevState) => ({
             ...prevState,
             isImage: imageUrl,
-            file: File,
+            file: file,
         }));
 
         try {
@@ -58,20 +74,19 @@ const Footer = () => {
             }));
 
             const formData = new FormData();
-            formData.append("file", File);
+            formData.append('file', file);
 
-            const { data } = await axios.post(
-                "/api/upload/imgUpload",
-                formData
-            );
+            const { data } = await axios.post('/api/upload/imgUpload', formData);
             setUploadState((prevState) => ({
                 ...prevState,
                 imageUrl: data.imgUrl,
             }));
         } catch (error) {
-            toast.error(error.response?.data?.message);
+            if (error instanceof AxiosError) {
+                toast.error(error.response?.data?.message || 'Image upload failed');
+            }
         } finally {
-            e.target.value = "";
+            if (e.target) e.target.value = '';
             setUploadState((prevState) => ({
                 ...prevState,
                 imageLoading: false,
@@ -80,98 +95,100 @@ const Footer = () => {
     };
 
     const handleCancelImage = async () => {
-        if (uploadState.uploadAbortController) {
-            uploadState.uploadAbortController.abort();
+        if (uploadState.abortController) {
+            uploadState.abortController.abort();
 
-            await axios.delete("/api/upload/deleteImage", {
-                params: { imgUrl: uploadState.imageUrl },
-            });
+            try {
+                await axios.delete('/api/upload/deleteImage', {
+                    params: { imgUrl: uploadState.imageUrl },
+                });
+            } catch (error) {
+                console.error('Failed to delete image on server', error);
+            }
         }
-        // Reset upload state
+
         setUploadState({
             imageLoading: false,
             file: null,
             isImage: null,
-            imageUrl: "",
+            imageUrl: '',
             abortController: null,
         });
     };
 
-    const updateChat = async (chatId, newMessage) => {
+    const updateChat = async (currentChatId: string | undefined, newMessage: IMessage) => {
         updateMessages(newMessage);
 
         try {
             setLoading(true);
-            setInput("");
+            setInput('');
             setUploadState((prevState) => ({
                 ...prevState,
                 isImage: null,
             }));
-            textareaRef.current.style.height = "auto";
 
-            const history = messages.map(({ image, isError, ...msg }) => msg);
+            if (textareaRef.current) textareaRef.current.style.height = 'auto';
+
+            const history = messages.map(({ image, isError, ...msg }: IMessage) => msg);
 
             const formData = new FormData();
-            formData.append("file", uploadState.file);
-            formData.append("referenceId", chatId || "");
-            formData.append("prompt", input);
-            formData.append("history", JSON.stringify(history));
-            formData.append("imageUrl", uploadState.imageUrl || "");
+            if (uploadState.file) formData.append('file', uploadState.file);
 
-            const { data } = await axios.post("/api/chat/createChat", formData);
-            const modelMessage = createChatMessage("model", data.modelMessage);
+
+            formData.append('referenceId', currentChatId || '');
+            formData.append('prompt', input);
+            formData.append('history', JSON.stringify(history));
+            formData.append('imageUrl', uploadState.imageUrl || '');
+
+            const { data } = await axios.post('/api/chat/createChat', formData);
+            const modelMessage = createChatMessage('model', data.modelMessage);
             updateMessages(modelMessage);
 
             setLoading(false);
             setUploadState((prevState) => ({
                 ...prevState,
                 file: null,
-                imageUrl: "",
+                imageUrl: '',
             }));
             return data.referenceId;
         } catch (error) {
             setLoading(false);
-            const modelMessage = createChatMessage(
-                "model",
-                error.response?.data?.message,
-                null,
-                true
-            );
+            const errorMessage =
+                error instanceof AxiosError ? error.response?.data?.message : 'An unexpected error occurred.';
+
+            const modelMessage = createChatMessage('model', errorMessage, '', true);
             updateMessages(modelMessage);
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement> | KeyboardEvent<HTMLTextAreaElement>) => {
         e.preventDefault();
 
         if (!input.trim()) return;
 
-        const newMessage = createChatMessage(
-            "user",
-            input,
-            uploadState.imageUrl
-        );
+        const newMessage = createChatMessage('user', input, uploadState.imageUrl);
 
         if (!chatId) {
             toast.promise(
                 updateChat(chatId, newMessage).then((referenceId) => {
                     setIsNewChat(true);
-                    if (referenceId !== undefined)
+                    if (referenceId !== undefined) {
                         router.push(`/chat/${referenceId}`);
+                    }
                 }),
                 {
-                    loading: "Generating response...",
-                    success: "Conversation initialized!",
-                    error: "Error initializing conversation",
-                }
+                    loading: 'Generating response...',
+                    success: 'Conversation initialized!',
+                    error: 'Error initializing conversation',
+                },
             );
         } else {
             await updateChat(chatId, newMessage);
         }
     };
 
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
+    const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             if (!uploadState.imageLoading) handleSubmit(e);
         }
@@ -185,30 +202,22 @@ const Footer = () => {
                         <div>
                             <div className="promptImg-container">
                                 <button
+                                    type="button"
                                     onClick={handleCancelImage}
-                                    className={`prompt-cancel-btn ${
-                                        uploadState.imageLoading && "loading"
-                                    }`}
+                                    className={`prompt-cancel-btn ${uploadState.imageLoading ? 'loading' : ''}`}
                                 >
                                     <RxCross2 />
                                 </button>
                                 <Image
                                     src={uploadState.isImage}
-                                    className={`prompt-img ${
-                                        uploadState.imageLoading && "loading"
-                                    }`}
+                                    className={`prompt-img ${uploadState.imageLoading ? 'loading' : ''}`}
                                     alt="prompt-image"
                                     width={75}
                                     height={75}
                                 />
                                 {uploadState.imageLoading && (
                                     <div className="image-loader">
-                                        <Oval
-                                            color="#7081fd"
-                                            secondaryColor="#7081fd"
-                                            height="32"
-                                            width="32"
-                                        />
+                                        <Oval color="#7081fd" secondaryColor="#7081fd" height="32" width="32" />
                                     </div>
                                 )}
                             </div>
@@ -218,14 +227,16 @@ const Footer = () => {
                         ref={textareaRef}
                         placeholder="Ask me anything"
                         value={input}
-                        onChange={(e) => {
+                        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
                             setInput(e.target.value);
-                            textareaRef.current.style.height = "auto";
-                            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+                            if (textareaRef.current) {
+                                textareaRef.current.style.height = 'auto';
+                                textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+                            }
                         }}
                         onKeyDown={handleKeyDown}
                         disabled={loading}
-                        rows="1"
+                        rows={1}
                     />
                 </div>
 
@@ -235,21 +246,16 @@ const Footer = () => {
                     </label>
                     <input
                         type="file"
-                        style={{ display: "none" }}
+                        style={{ display: 'none' }}
                         name="image"
                         id="image"
                         onChange={handleImageChange}
+                        accept="image/*"
                     />
                     <button
                         type="submit"
-                        disabled={
-                            loading || !input.trim() || uploadState.imageLoading
-                        }
-                        className={`send-btn ${
-                            loading || !input.trim() || uploadState.imageLoading
-                                ? "disabled"
-                                : ""
-                        }`}
+                        disabled={loading || !input.trim() || uploadState.imageLoading}
+                        className={`send-btn ${loading || !input.trim() || uploadState.imageLoading ? 'disabled' : ''}`}
                     >
                         <IoMdSend />
                     </button>
