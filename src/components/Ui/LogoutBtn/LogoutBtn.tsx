@@ -1,6 +1,6 @@
-"use client";
-import { signOut } from "next-auth/react";
-import { MdLogout } from "react-icons/md";
+'use client';
+import { signOut } from 'next-auth/react';
+import { MdLogout } from 'react-icons/md';
 
 const LogoutBtn = () => {
     return (
