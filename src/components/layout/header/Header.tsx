@@ -27,7 +27,7 @@ const Header = async () => {
                     <div className="profile-avatar">
                         <Image
                             src={user?.avatar || DefaultAvatar}
-                            alt="profile"
+                            alt="profile image"
                             width={34}
                             height={34}
                         />
@@ -37,13 +37,13 @@ const Header = async () => {
                     <div className="profile-info">
                         <Image
                             src={user?.avatar || DefaultAvatar}
-                            alt="profile"
+                            alt="profile info image"
                             width={34}
                             height={34}
                         />
                         <div>
-                            <p>{user?.name}</p>
-                            <p>{user?.email}</p>
+                            <p>{user?.name || "User"}</p>
+                            <p>{user?.email || ""}</p>
                         </div>
                     </div>
                     <div className="profile-actions">
