@@ -1,21 +1,28 @@
-"use client";
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import axios from "axios";
-import useAppStore from "@/store/store";
-import Message from "@/components/layout/main/message/Message";
-import { Oval } from "react-loader-spinner";
-import { toast } from "sonner";
-import { useSession } from "next-auth/react";
+'use client';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import axios, { AxiosError } from 'axios';
+import useAppStore from '@/store/store';
+import Message from '@/components/layout/main/message/Message';
+import { Oval } from 'react-loader-spinner';
+import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 
-const ChatPage = ({ params }) => {
+interface ChatPageProps {
+    params: {
+        chatId: string;
+    };
+}
+
+const ChatPage = ({ params }: ChatPageProps) => {
     const messages = useAppStore((state) => state.messages);
     const setMessages = useAppStore((state) => state.setMessages);
     const loading = useAppStore((state) => state.loading);
     const setIsNewChat = useAppStore((state) => state.setIsNewChat);
 
-    const [fetchLoading, setFetchLoading] = useState(false);
-    const messagesEndRef = useRef(null);
+    const [fetchLoading, setFetchLoading] = useState<boolean>(false);
+
+    const messagesEndRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
     const { data: session } = useSession();
@@ -27,17 +34,16 @@ const ChatPage = ({ params }) => {
             setFetchLoading(true);
             setIsNewChat(false);
 
-            const { data } = await axios.post("/api/message/fetchMessages", {
+            const { data } = await axios.post('/api/message/fetchMessages', {
                 chatId: params.chatId,
             });
             setMessages(data.messages);
         } catch (error) {
-            if (
-                error.response?.status === 404 &&
-                error.response?.data?.flag === "Not Found"
-            ) {
-                router.push("/chat");
-                toast.error(error.response?.data?.message);
+            if (error instanceof AxiosError) {
+                if (error.response?.status === 404 && error.response?.data?.flag === 'Not Found') {
+                    router.push('/chat');
+                    toast.error(error.response?.data?.message || 'Chat not found');
+                }
             }
         } finally {
             setFetchLoading(false);
@@ -45,13 +51,13 @@ const ChatPage = ({ params }) => {
     };
 
     useEffect(() => {
-        if (params.chatId) {
-            fetchMessages();
-        }
+        if (params.chatId) fetchMessages();
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [params.chatId]);
 
     useLayoutEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
     return (
@@ -76,9 +82,7 @@ const ChatPage = ({ params }) => {
                                     key={index}
                                     user={user}
                                     message={message}
-                                    loading={
-                                        loading && index === messages.length - 1
-                                    }
+                                    loading={loading && index === messages.length - 1}
                                 />
                             ))}
                             <div ref={messagesEndRef} />
