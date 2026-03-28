@@ -1,19 +1,11 @@
 import { ReactNode } from "react";
 
 // API_response
-export interface IApiResponse<T = any> {
+export interface IResponseWrapper<T = any> {
     success: boolean;
-    message: string;
-    data: T | null;
     status: number;
-    error?: string | null;
-}
-
-export interface IApiError {
-    success: false;
-    message: string;
-    status: number;
-    error: string;
+    message?: string;
+    data?: T;
 }
 
 // Auth types
