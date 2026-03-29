@@ -1,55 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import connectToDB from '@/utils/dbConnect';
 import User from '@/models/userModel';
 import { v4 as uuidv4 } from 'uuid';
 import sendEmail from '@/utils/sendMail';
 import path from 'path';
 import fs from 'fs';
+import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
+import { apiHandler } from '@/lib/apiHandler';
 
 interface IForgotPasswordBody {
     email?: string;
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export const POST = apiHandler(async (request: NextRequest) => {
     await connectToDB();
 
-    try {
-        const body: IForgotPasswordBody = await request.json();
-        const { email } = body;
+    const body: IForgotPasswordBody = await request.json();
+    const { email } = body;
 
-        if (!email) return NextResponse.json({ message: 'Email is required' }, { status: 400 });
+    if (!email) throw new ErrorWrapper(400, 'Email is required');
 
-        const user = await User.findOne({ email });
-        if (!user) return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    const user = await User.findOne({ email });
+    if (!user) throw new ErrorWrapper(404, 'User not found');
 
-        const resetToken = uuidv4();
+    const resetToken = uuidv4();
 
-        user.forgotPasswordToken = resetToken;
-        user.forgotPasswordTokenExpiry = new Date(Date.now() + 3600000);
+    user.forgotPasswordToken = resetToken;
+    user.forgotPasswordTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
 
-        await user.save({ validateBeforeSave: false });
+    await user.save({ validateBeforeSave: false });
 
-        const to = user.email;
-        const subject = 'Change password for AetherBot';
+    const templatePath = path.resolve(process.cwd(), 'src/templates/forgot-password.html');
+    const passwordResetTemplate = fs.readFileSync(templatePath, 'utf8');
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-        const templatePath = path.resolve(process.cwd(), 'src/templates/forgot-password.html');
+    const passwordResetContent = passwordResetTemplate
+        .replace(/{{FRONTEND_URL}}/g, frontendUrl)
+        .replace(/{{forgotPasswordToken}}/g, resetToken);
 
-        const passwordResetTemplate = fs.readFileSync(templatePath, 'utf8');
+    await sendEmail(user.email, 'Change password for AetherBot', '', passwordResetContent);
 
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-
-        const passwordResetContent = passwordResetTemplate
-            .replace(/{{FRONTEND_URL}}/g, frontendUrl)
-            .replace(/{{forgotPasswordToken}}/g, resetToken);
-
-        await sendEmail(to, subject, '', passwordResetContent);
-
-        return NextResponse.json({ message: `An email has been sent to ${to}` }, { status: 200 });
-    } catch (error) {
-        console.error('Forgot password error:', error);
-        return NextResponse.json(
-            { message: error instanceof Error ? error.message : 'Internal server error' },
-            { status: 500 },
-        );
-    }
-}
+    return ResponseWrapper.success(null, 200, `An email has been sent to ${user.email}`);
+});
