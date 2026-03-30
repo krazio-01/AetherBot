@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export class ErrorWrapper extends Error {
     status: number;
 
-    constructor(statusCode: number, message: string = 'Something went wrong', stack: string = '') {
+    constructor(statusCode: number, message?: string, stack: string = '') {
         super(message);
         this.status = statusCode;
         this.name = this.constructor.name;
@@ -17,11 +17,26 @@ export class ErrorWrapper extends Error {
 }
 
 export class ResponseWrapper {
-    static success<T>(data: T, status: number = 200, message: string = 'Success') {
-        return NextResponse.json({ success: true, status, message, data }, { status });
+    static success<T>(data: T, status: number = 200, message?: string) {
+        return NextResponse.json(
+            {
+                success: true,
+                status,
+                data,
+                ...(message && { message }),
+            },
+            { status },
+        );
     }
 
-    static error(message: string, status: number = 400) {
-        return NextResponse.json({ success: false, status, message }, { status });
+    static error(message?: string, status: number = 400) {
+        return NextResponse.json(
+            {
+                success: false,
+                status,
+                ...(message && { message }),
+            },
+            { status },
+        );
     }
 }
