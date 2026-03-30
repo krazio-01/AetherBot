@@ -17,7 +17,18 @@ export class ErrorWrapper extends Error {
 }
 
 export class ResponseWrapper {
-    static success<T>(data: T, status: number = 200, message?: string) {
+    static success(status: number = 200, message?: string) {
+        return NextResponse.json(
+            {
+                success: true,
+                status,
+                ...(message && { message }),
+            },
+            { status },
+        );
+    }
+
+    static successWithData<T>(data: T, status: number = 200, message?: string) {
         return NextResponse.json(
             {
                 success: true,
