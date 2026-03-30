@@ -35,5 +35,5 @@ export const POST = apiHandler(async (request: NextRequest) => {
 
     await user.save();
 
-    return ResponseWrapper.success(null, 200, 'Password reset successfully');
+    return ResponseWrapper.success(200, 'Password reset successfully');
 });

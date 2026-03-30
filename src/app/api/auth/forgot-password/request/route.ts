@@ -40,5 +40,5 @@ export const POST = apiHandler(async (request: NextRequest) => {
 
     await sendEmail(user.email, 'Change password for AetherBot', '', passwordResetContent);
 
-    return ResponseWrapper.success(null, 200, `An email has been sent to ${user.email}`);
+    return ResponseWrapper.success(undefined, 200, `An email has been sent to ${user.email}`);
 });

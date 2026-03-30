@@ -63,5 +63,5 @@ export const POST = apiHandler(async (request: NextRequest) => {
 
     await sendEmail(user.email, 'Account Verification', '', verificationContent);
 
-    return ResponseWrapper.success({ user }, 201, 'Registration successful');
+    return ResponseWrapper.successWithData({ user }, 201, 'Registration successful');
 });
