@@ -1,32 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import Message from '@/models/messageModel';
 import connectToDB from '@/utils/dbConnect';
+import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
+import { apiHandler } from '@/lib/apiHandler';
 
-interface FetchMessagesBody {
+interface IFetchMessagesBody {
     chatId?: string;
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export const POST = apiHandler(async (request: NextRequest) => {
     await connectToDB();
 
-    try {
-        const body: FetchMessagesBody = await request.json();
-        const { chatId } = body;
+    const body: IFetchMessagesBody = await request.json();
+    const { chatId } = body;
 
-        if (!chatId || typeof chatId !== 'string')
-            return NextResponse.json({ message: 'Invalid or missing chatId format' }, { status: 400 });
+    if (!chatId || typeof chatId !== 'string') throw new ErrorWrapper(400, 'Invalid or missing chatId format');
 
-        const messages = await Message.find({ chatId }).select('-_id -chatId -__v');
+    const messages = await Message.find({ chatId }).select('-_id -chatId -__v');
 
-        if (!messages || messages.length === 0)
-            return NextResponse.json({ message: `No chat exists for: ${chatId}`, flag: 'Not Found' }, { status: 404 });
+    if (!messages || messages.length === 0) throw new ErrorWrapper(404, `No chat exists for: ${chatId}`);
 
-        return NextResponse.json({ messages }, { status: 200 });
-    } catch (error) {
-        console.error('Fetch messages error:', error);
-        return NextResponse.json(
-            { message: error instanceof Error ? error.message : 'Internal server error' },
-            { status: 500 },
-        );
-    }
-}
+    return ResponseWrapper.successWithData({ messages });
+});
