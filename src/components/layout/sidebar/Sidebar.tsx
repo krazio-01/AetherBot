@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { MdDarkMode } from 'react-icons/md';
 import { FaPlus } from 'react-icons/fa6';
 import { IoSettingsOutline } from 'react-icons/io5';
-import { IMenuItem } from '@/types';
+import { IChat, IMenuItem, IResponseWrapper } from '@/types';
 import './sidebar.css';
 
 const Sidebar = () => {
@@ -58,11 +58,17 @@ const Sidebar = () => {
         const fetchChats = async () => {
             try {
                 setChatsLoading(true);
-                const { data } = await axios.get('/api/chat/fetchChats');
-                setChats(data.chats);
+
+                const { data } = await axios.get<IResponseWrapper<{ chats: IChat[] }>>('/api/chat/fetchChats');
+
+                if (data.data?.chats) setChats(data.data.chats);
             } catch (error) {
-                if (error instanceof AxiosError) toast.error(error.response?.data?.message || 'Failed to fetch chats');
-                else toast.error('An unexpected error occurred');
+                if (error instanceof AxiosError) {
+                    const errorData = error.response?.data as IResponseWrapper;
+                    toast.error(errorData?.message || 'Failed to fetch chats');
+                } else {
+                    toast.error('An unexpected error occurred');
+                }
             } finally {
                 setChatsLoading(false);
             }
