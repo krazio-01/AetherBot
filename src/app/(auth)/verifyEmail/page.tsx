@@ -1,57 +1,58 @@
-'use client';
-import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import axios, { AxiosError } from 'axios';
 import Link from 'next/link';
+import { IResponseWrapper } from '@/types';
 import '../auth.css';
 
-const PageInner = () => {
-    const [verified, setVerified] = useState('');
-    const [error, setError] = useState('');
+interface IVeifyEmailPageProps {
+    searchParams: { [key: string]: string | string[] | undefined };
+}
 
-    const searchParams = useSearchParams();
-    const token = searchParams.get('token');
+export default async function VerifyEmailPage({ searchParams }: IVeifyEmailPageProps) {
+    const token = searchParams.token as string;
 
-    useEffect(() => {
-        const verifyUserEmail = async () => {
-            try {
-                const { data } = await axios.post('/api/auth/verifyEmail', {
-                    token: token ? token : '',
-                });
-                setVerified(data.message);
-            } catch (err) {
-                setVerified('');
-                if (err instanceof AxiosError) setError(err.response?.data?.message || 'Verification failed');
-                else setError('An unexpected error occurred');
-            }
-        };
+    if (!token) {
+        return (
+            <div className="verify-email-main">
+                <h1 className="error-text">Invalid or missing verification token.</h1>
+            </div>
+        );
+    }
 
-        if (token && token.length > 0) {
-            verifyUserEmail();
-        }
-    }, [token]);
+    let isSuccess = false;
+    let message = '';
+
+    try {
+        const res = await fetch(`${process.env.FRONTEND_URL}/api/auth/verifyEmail`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token }),
+            cache: 'no-store',
+        });
+
+        const responseData = (await res.json()) as IResponseWrapper;
+
+        if (!responseData.success) throw new Error(responseData.message || 'Verification failed');
+
+        isSuccess = true;
+        message = responseData.message || 'Email verified successfully.';
+    } catch (err: any) {
+        isSuccess = false;
+        message = err instanceof Error ? err.message : 'An unexpected error occurred';
+    }
 
     return (
         <div className="verify-email-main">
-            {verified && (
+            {isSuccess ? (
                 <div>
-                    <h1 className="text-2xl">Email Verified Successfully</h1>
+                    <h1>{message}</h1>
                     <Link href="/login">Login</Link>
                 </div>
-            )}
-            {error && (
+            ) : (
                 <div>
-                    <h1>{error}</h1>
+                    <h1 className="error-text">{message}</h1>
                 </div>
             )}
         </div>
-    );
-};
-
-export default function Page() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <PageInner />
-        </Suspense>
     );
 }
