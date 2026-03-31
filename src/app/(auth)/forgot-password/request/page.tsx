@@ -1,13 +1,14 @@
 'use client';
-import { useRef, useState } from 'react';
-import axios, { AxiosError } from 'axios';
+import { useRef } from 'react';
 import AuthForm from '@/components/forms/AuthForm';
 import { MdLockReset, MdEmail } from 'react-icons/md';
 import { IAuthField } from '@/types';
+import { useRequest } from '@/hooks/useRequest';
+import { IPasswordResetRequest } from '@/types/auth';
 import '../../auth.css';
 
 const Page = () => {
-    const [loading, setLoading] = useState(false);
+    const { postRequest, isPending } = useRequest();
 
     const emailRef = useRef<HTMLInputElement>(null);
     const refs = [emailRef];
@@ -15,18 +16,11 @@ const Page = () => {
     const formFields: IAuthField[] = [{ name: 'email', label: 'Email', type: 'email', icon: <MdEmail /> }];
 
     const handleChangeRequest = async () => {
-        try {
-            setLoading(true);
-            const { data } = await axios.post('/api/auth/forgot-password/request', {
-                email: emailRef.current?.value || '',
-            });
-            return data.message;
-        } catch (error) {
-            if (error instanceof AxiosError) throw error.response?.data?.message || 'Failed to send reset email.';
-            throw 'An unexpected error occurred.';
-        } finally {
-            setLoading(false);
-        }
+        const res = await postRequest<void, IPasswordResetRequest>('/auth/forgot-password/request', {
+            email: emailRef.current?.value || '',
+        });
+
+        return res.message;
     };
 
     return (
@@ -48,7 +42,7 @@ const Page = () => {
                 <AuthForm
                     formFields={formFields}
                     refs={refs}
-                    loading={loading}
+                    loading={isPending}
                     onSubmit={handleChangeRequest}
                     loadingText="Sending email..."
                     redirectUrl="/forgot-password/request"
