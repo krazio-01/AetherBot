@@ -12,6 +12,7 @@ import Avatar2 from '../../../../public/images/avatar2.jpeg';
 import Avatar3 from '../../../../public/images/avatar3.jpeg';
 import Avatar4 from '../../../../public/images/avatar4.jpeg';
 import { IAuthField } from '@/types';
+import { ISignupRequest } from '@/types/auth';
 import '../auth.css';
 
 const Page = () => {
@@ -37,7 +38,7 @@ const Page = () => {
         const avatars = [Avatar1, Avatar2, Avatar3, Avatar4];
         const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
 
-        const res = await postRequest<{ message: string }>('/auth/signup', {
+        const res = await postRequest<void, ISignupRequest>('/auth/signup', {
             name: nameRef.current?.value || '',
             email: emailRef.current?.value || '',
             password: passwordRef.current?.value || '',
@@ -79,14 +80,22 @@ const Page = () => {
                     </div>
 
                     <div className="providers">
-                        <AuthProviderBtn loading={isPending} provider="discord" btnText="Discord" icon={<FaDiscord />} />
+                        <AuthProviderBtn
+                            loading={isPending}
+                            provider="discord"
+                            btnText="Discord"
+                            icon={<FaDiscord />}
+                        />
 
                         <AuthProviderBtn loading={isPending} provider="github" btnText="Github" icon={<FaGithub />} />
                     </div>
                 </div>
 
                 <p className="auth-form-footer">
-                    Already have an account? <Link aria-disabled={true} href="/login">Sign In</Link>
+                    Already have an account?{' '}
+                    <Link aria-disabled={true} href="/login">
+                        Sign In
+                    </Link>
                 </p>
             </div>
         </div>
