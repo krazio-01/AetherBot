@@ -8,6 +8,12 @@ export interface IResponseWrapper<T = any> {
     data?: T;
 }
 
+export interface IErrorWrapper {
+    success: boolean;
+    status: number;
+    message?: string;
+}
+
 // Auth types
 export interface IAuthField {
     name: string;
