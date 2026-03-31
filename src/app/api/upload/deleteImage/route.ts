@@ -1,26 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import cloudinary from '@/utils/cloudinaryConfig';
+import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
+import { apiHandler } from '@/lib/apiHandler';
 
-export async function DELETE(request: NextRequest): Promise<NextResponse> {
+export const DELETE = apiHandler(async (request: NextRequest) => {
     const { searchParams } = request.nextUrl;
     const imgUrl = searchParams.get('imgUrl');
 
-    if (!imgUrl) return NextResponse.json({ message: 'Image URL is required' }, { status: 400 });
+    if (!imgUrl) throw new ErrorWrapper(400, 'Image URL is required');
 
-    try {
-        const id = imgUrl.split('/').pop()?.split('.')[0];
+    const id = imgUrl.split('/').pop()?.split('.')[0];
 
-        if (!id) return NextResponse.json({ message: 'Invalid image URL format' }, { status: 400 });
+    if (!id) throw new ErrorWrapper(400, 'Invalid image URL format');
 
-        const publicId = `AetherBot/${id}`;
-        await cloudinary.uploader.destroy(publicId);
+    const publicId = `AetherBot/${id}`;
+    await cloudinary.uploader.destroy(publicId);
 
-        return NextResponse.json({ message: 'Image deleted' }, { status: 200 });
-    } catch (error) {
-        console.error('Delete image error:', error);
-        return NextResponse.json(
-            { message: error instanceof Error ? error.message : 'Internal server error' },
-            { status: 500 },
-        );
-    }
-}
+    return ResponseWrapper.success(200, 'Image deleted');
+});
