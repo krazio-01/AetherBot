@@ -1,11 +1,11 @@
 'use client';
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import AuthProviderBtn from '@/components/Ui/AuthProviderBtn/AuthProviderBtn';
 import { MdEmail } from 'react-icons/md';
 import { FaUser, FaUserCircle, FaLock, FaGithub, FaDiscord } from 'react-icons/fa';
-import axios, { AxiosError } from 'axios';
+import { useRequest } from '@/hooks/useRequest';
 import AuthForm from '@/components/forms/AuthForm';
 import Avatar1 from '../../../../public/images/avatar1.jpeg';
 import Avatar2 from '../../../../public/images/avatar2.jpeg';
@@ -15,7 +15,7 @@ import { IAuthField } from '@/types';
 import '../auth.css';
 
 const Page = () => {
-    const [loading, setLoading] = useState(false);
+    const { postRequest, isPending } = useRequest();
 
     const nameRef = useRef<HTMLInputElement>(null);
     const emailRef = useRef<HTMLInputElement>(null);
@@ -34,28 +34,17 @@ const Page = () => {
     const refs = [nameRef, emailRef, passwordRef];
 
     const handleRegistration = async () => {
-        try {
-            setLoading(true);
+        const avatars = [Avatar1, Avatar2, Avatar3, Avatar4];
+        const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
 
-            const avatars = [Avatar1, Avatar2, Avatar3, Avatar4];
-            const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+        const res = await postRequest<{ message: string }>('/auth/signup', {
+            name: nameRef.current?.value || '',
+            email: emailRef.current?.value || '',
+            password: passwordRef.current?.value || '',
+            avatar: randomAvatar.src,
+        });
 
-            const { data } = await axios.post('/api/auth/signup', {
-                name: nameRef.current?.value || '',
-                email: emailRef.current?.value || '',
-                password: passwordRef.current?.value || '',
-                avatar: randomAvatar.src,
-            });
-
-            return data.message;
-        } catch (error) {
-            if (error instanceof AxiosError)
-                throw error.response?.data?.message || 'Registration failed. Please try again.';
-
-            throw 'An unexpected error occurred during registration.';
-        } finally {
-            setLoading(false);
-        }
+        return res?.message;
     };
 
     const additionalToast = () => {
@@ -76,7 +65,7 @@ const Page = () => {
                 <AuthForm
                     formFields={formFields}
                     refs={refs}
-                    loading={loading}
+                    loading={isPending}
                     onSubmit={handleRegistration}
                     loadingText="Signing up..."
                     redirectUrl="/login"
@@ -90,14 +79,14 @@ const Page = () => {
                     </div>
 
                     <div className="providers">
-                        <AuthProviderBtn loading={loading} provider="discord" btnText="Discord" icon={<FaDiscord />} />
+                        <AuthProviderBtn loading={isPending} provider="discord" btnText="Discord" icon={<FaDiscord />} />
 
-                        <AuthProviderBtn loading={loading} provider="github" btnText="Github" icon={<FaGithub />} />
+                        <AuthProviderBtn loading={isPending} provider="github" btnText="Github" icon={<FaGithub />} />
                     </div>
                 </div>
 
                 <p className="auth-form-footer">
-                    Already have an account? <Link href="/login">Sign In</Link>
+                    Already have an account? <Link aria-disabled={true} href="/login">Sign In</Link>
                 </p>
             </div>
         </div>
