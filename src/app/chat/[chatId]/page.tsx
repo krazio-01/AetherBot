@@ -8,7 +8,7 @@ import { Oval } from 'react-loader-spinner';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 import { useRequest } from '@/hooks/useRequest';
-import { IFetchMessagesRequest, IFetchMessagesResponse } from '@/types/message';
+import { IFetchMessagesRequest, IFetchMessagesResponse } from '@/types/chat';
 
 interface IChatPageProps {
     params: {

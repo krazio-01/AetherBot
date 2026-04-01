@@ -4,12 +4,13 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import useAppStore from '@/store/store';
 import { toast } from 'sonner';
-import axios, { AxiosError } from 'axios';
 import { Oval } from 'react-loader-spinner';
 import { LuImagePlus } from 'react-icons/lu';
 import { IoMdSend } from 'react-icons/io';
 import { RxCross2 } from 'react-icons/rx';
 import { IMessage } from '@/types';
+import { useRequest } from '@/hooks/useRequest';
+import { ICreateChatResponse, IUploadImageResponse } from '@/types/chat';
 import './footer.css';
 
 interface IUploadState {
@@ -17,7 +18,6 @@ interface IUploadState {
     file: File | null;
     isImage: string | null;
     imageUrl: string;
-    abortController: AbortController | null;
 }
 
 const Footer = () => {
@@ -29,12 +29,15 @@ const Footer = () => {
     const messages = useAppStore((state) => state.messages);
     const updateMessages = useAppStore((state) => state.updateMessages);
 
+    const { postRequest: uploadImgReq, deleteRequest: deleteImgReq, cancel: cancelUpload } = useRequest();
+
+    const { postRequest: chatReq } = useRequest();
+
     const [uploadState, setUploadState] = useState<IUploadState>({
         imageLoading: false,
         file: null,
         isImage: null,
         imageUrl: '',
-        abortController: null,
     });
 
     const params = useParams();
@@ -57,34 +60,31 @@ const Footer = () => {
 
     const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-
         if (!file) return;
 
-        const imageUrl = URL.createObjectURL(file);
+        const localImageUrl = URL.createObjectURL(file);
         setUploadState((prevState) => ({
             ...prevState,
-            isImage: imageUrl,
+            isImage: localImageUrl,
             file: file,
+            imageLoading: true,
         }));
 
         try {
-            setUploadState((prevState) => ({
-                ...prevState,
-                imageLoading: true,
-            }));
-
             const formData = new FormData();
             formData.append('file', file);
 
-            const { data } = await axios.post('/api/upload/imgUpload', formData);
-            setUploadState((prevState) => ({
-                ...prevState,
-                imageUrl: data.imgUrl,
-            }));
-        } catch (error) {
-            if (error instanceof AxiosError) {
-                toast.error(error.response?.data?.message || 'Image upload failed');
+            const res = await uploadImgReq<IUploadImageResponse, FormData>('/upload/imgUpload', formData);
+
+            if (res.success && res.data) {
+                setUploadState((prevState) => ({
+                    ...prevState,
+                    imageUrl: res.data!.imgUrl,
+                }));
             }
+        } catch (error: any) {
+            if (error?.name === 'AbortError' || error?.message?.includes('canceled')) return;
+            toast.error(typeof error === 'string' ? error : 'Image upload failed');
         } finally {
             if (e.target) e.target.value = '';
             setUploadState((prevState) => ({
@@ -94,26 +94,25 @@ const Footer = () => {
         }
     };
 
-    const handleCancelImage = async () => {
-        if (uploadState.abortController) {
-            uploadState.abortController.abort();
+    const handleCancelImage = () => {
+        cancelUpload();
 
-            try {
-                await axios.delete('/api/upload/deleteImage', {
-                    params: { imgUrl: uploadState.imageUrl },
-                });
-            } catch (error) {
-                console.error('Failed to delete image on server', error);
-            }
-        }
+        const urlToDelete = uploadState.imageUrl;
 
         setUploadState({
             imageLoading: false,
             file: null,
             isImage: null,
             imageUrl: '',
-            abortController: null,
         });
+
+        if (urlToDelete) {
+            deleteImgReq<void>('/upload/deleteImage', {
+                params: { imgUrl: urlToDelete },
+            }).catch((error) => {
+                console.error('Failed to delete image on server', error);
+            });
+        }
     };
 
     const updateChat = async (currentChatId: string | undefined, newMessage: IMessage) => {
@@ -134,30 +133,31 @@ const Footer = () => {
             const formData = new FormData();
             if (uploadState.file) formData.append('file', uploadState.file);
 
-
             formData.append('referenceId', currentChatId || '');
             formData.append('prompt', input);
             formData.append('history', JSON.stringify(history));
             formData.append('imageUrl', uploadState.imageUrl || '');
 
-            const { data } = await axios.post('/api/chat/createChat', formData);
-            const modelMessage = createChatMessage('model', data.modelMessage);
-            updateMessages(modelMessage);
+            const res = await chatReq<ICreateChatResponse, FormData>('/chat/createChat', formData);
 
-            setLoading(false);
-            setUploadState((prevState) => ({
-                ...prevState,
-                file: null,
-                imageUrl: '',
-            }));
-            return data.referenceId;
+            if (res.success && res.data) {
+                const modelMessage = createChatMessage('model', res.data.modelMessage);
+                updateMessages(modelMessage);
+
+                setUploadState((prevState) => ({
+                    ...prevState,
+                    file: null,
+                    imageUrl: '',
+                }));
+
+                return res.data.referenceId;
+            }
         } catch (error) {
-            setLoading(false);
-            const errorMessage =
-                error instanceof AxiosError ? error.response?.data?.message : 'An unexpected error occurred.';
-
+            const errorMessage = typeof error === 'string' ? error : 'An unexpected error occurred.';
             const modelMessage = createChatMessage('model', errorMessage, '', true);
             updateMessages(modelMessage);
+        } finally {
+            setLoading(false);
         }
     };
 
