@@ -7,3 +7,12 @@ export interface IFetchMessagesRequest {
 export interface IFetchMessagesResponse {
     messages: IMessage[];
 }
+
+export interface IUploadImageResponse {
+    imgUrl: string;
+}
+
+export interface ICreateChatResponse {
+    modelMessage: string;
+    referenceId: string;
+}
