@@ -1,26 +1,28 @@
 'use client';
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import useAppStore from '@/store/store';
 import Message from '@/components/layout/main/message/Message';
 import { Oval } from 'react-loader-spinner';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
+import { useRequest } from '@/hooks/useRequest';
+import { IFetchMessagesRequest, IFetchMessagesResponse } from '@/types/message';
 
-interface ChatPageProps {
+interface IChatPageProps {
     params: {
         chatId: string;
     };
 }
 
-const ChatPage = ({ params }: ChatPageProps) => {
+const ChatPage = ({ params }: IChatPageProps) => {
     const messages = useAppStore((state) => state.messages);
     const setMessages = useAppStore((state) => state.setMessages);
     const loading = useAppStore((state) => state.loading);
     const setIsNewChat = useAppStore((state) => state.setIsNewChat);
 
-    const [fetchLoading, setFetchLoading] = useState<boolean>(false);
+    const { postRequest, isPending, cancel } = useRequest();
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
@@ -31,22 +33,19 @@ const ChatPage = ({ params }: ChatPageProps) => {
     const fetchMessages = async () => {
         try {
             setMessages([]);
-            setFetchLoading(true);
             setIsNewChat(false);
+            cancel();
 
-            const { data } = await axios.post('/api/message/fetchMessages', {
+            const res = await postRequest<IFetchMessagesResponse, IFetchMessagesRequest>('/message/fetchMessages', {
                 chatId: params.chatId,
             });
-            setMessages(data.messages);
+
+            if (res.success && res.data) setMessages(res.data.messages);
         } catch (error) {
-            if (error instanceof AxiosError) {
-                if (error.response?.status === 404 && error.response?.data?.flag === 'Not Found') {
-                    router.push('/chat');
-                    toast.error(error.response?.data?.message || 'Chat not found');
-                }
-            }
-        } finally {
-            setFetchLoading(false);
+            if (axios.isCancel(error) || error?.name === 'AbortError') return;
+
+            router.push('/chat');
+            toast.error(typeof error === 'string' ? error : 'Chat not found');
         }
     };
 
@@ -62,7 +61,7 @@ const ChatPage = ({ params }: ChatPageProps) => {
 
     return (
         <div className="chatbox-main">
-            {fetchLoading ? (
+            {isPending ? (
                 <div className="loader">
                     <Oval
                         visible={true}
