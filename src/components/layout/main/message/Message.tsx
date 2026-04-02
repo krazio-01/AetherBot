@@ -11,6 +11,7 @@ import { MdErrorOutline } from 'react-icons/md';
 import LogoImage from '../../../../../public/images/logo.png';
 import FallbackImg from '../../../../../public/images/default.webp';
 import { ISessionUser, IMessage } from '@/types';
+import { ChatRole } from '@/types/chat';
 import './message.css';
 
 interface IMessageProps {
@@ -22,7 +23,7 @@ interface IMessageProps {
 interface IMarkDownBlockProps {
     part: { text: string };
     handleCopyClick: (content: string) => void;
-    role: 'user' | 'model';
+    role: ChatRole;
 }
 
 interface ILoadingComponentProps {
@@ -41,10 +42,10 @@ const Message = ({ user, message, loading }: IMessageProps) => {
     return (
         <div className={`message-${message.role}`}>
             <Image
-                src={message.role === 'user' ? user?.avatar || FallbackImg : (LogoImage as StaticImageData)}
+                src={message.role === ChatRole.USER ? user?.avatar || FallbackImg : (LogoImage as StaticImageData)}
                 alt={message.role}
-                width={message.role === 'user' ? 30 : 45}
-                height={message.role === 'user' ? 30 : 45}
+                width={message.role === ChatRole.USER ? 30 : 45}
+                height={message.role === ChatRole.USER ? 30 : 45}
             />
             <div className="message-content">
                 {message?.isError ? (
@@ -73,7 +74,7 @@ const Message = ({ user, message, loading }: IMessageProps) => {
 };
 
 const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, role }: IMarkDownBlockProps) {
-    return role === 'model' ? (
+    return role === ChatRole.MODEL ? (
         <Markdown
             components={{
                 code({ node, inline, className, children, ...props }: any) {

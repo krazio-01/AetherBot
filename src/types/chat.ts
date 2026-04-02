@@ -1,5 +1,10 @@
 import { IChat, IMessage } from ".";
 
+export enum ChatRole {
+    USER = 'user',
+    MODEL = 'model',
+}
+
 export interface IFetchMessagesRequest {
     chatId: string;
 }

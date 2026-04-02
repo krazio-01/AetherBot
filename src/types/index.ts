@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { ChatRole } from "./chat";
 
 // API_response
 export interface IResponseWrapper<T = any> {
@@ -35,7 +36,7 @@ export interface IMessagePart {
 }
 
 export interface IMessage {
-    role: 'user' | 'model';
+    role: ChatRole;
     parts: IMessagePart[];
     image?: string;
     isError?: boolean;

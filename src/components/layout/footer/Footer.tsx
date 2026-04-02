@@ -10,7 +10,7 @@ import { IoMdSend } from 'react-icons/io';
 import { RxCross2 } from 'react-icons/rx';
 import { IMessage } from '@/types';
 import { useRequest } from '@/hooks/useRequest';
-import { ICreateChatResponse, IUploadImageResponse } from '@/types/chat';
+import { ChatRole, ICreateChatResponse, IUploadImageResponse } from '@/types/chat';
 import './footer.css';
 
 interface IUploadState {
@@ -47,7 +47,7 @@ const Footer = () => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const createChatMessage = (
-        role: 'user' | 'model',
+        role: ChatRole,
         text: string,
         imageUrl: string = '',
         isError: boolean = false,
@@ -141,7 +141,7 @@ const Footer = () => {
             const res = await chatReq<ICreateChatResponse, FormData>('/chat/createChat', formData);
 
             if (res.success && res.data) {
-                const modelMessage = createChatMessage('model', res.data.modelMessage);
+                const modelMessage = createChatMessage(ChatRole.MODEL, res.data.modelMessage);
                 updateMessages(modelMessage);
 
                 setUploadState((prevState) => ({
@@ -154,7 +154,7 @@ const Footer = () => {
             }
         } catch (error) {
             const errorMessage = typeof error === 'string' ? error : 'An unexpected error occurred.';
-            const modelMessage = createChatMessage('model', errorMessage, '', true);
+            const modelMessage = createChatMessage(ChatRole.MODEL, errorMessage, '', true);
             updateMessages(modelMessage);
         } finally {
             setLoading(false);
@@ -166,7 +166,7 @@ const Footer = () => {
 
         if (!input.trim()) return;
 
-        const newMessage = createChatMessage('user', input, uploadState.imageUrl);
+        const newMessage = createChatMessage(ChatRole.USER, input, uploadState.imageUrl);
 
         if (!chatId) {
             toast.promise(
