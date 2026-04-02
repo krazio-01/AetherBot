@@ -10,7 +10,7 @@ const PUBLIC_PATHS = new Set<string>([
     '/forgot-password',
     '/forgot-password/request',
 ]);
-const PROTECTED_PATHS: string[] = ['/chat'];
+const PROTECTED_PATHS: string[] = [];
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
     const token = await getToken({ req: request });
