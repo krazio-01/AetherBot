@@ -1,4 +1,4 @@
-import { IMessage } from ".";
+import { IChat, IMessage } from ".";
 
 export interface IFetchMessagesRequest {
     chatId: string;
@@ -15,4 +15,8 @@ export interface IUploadImageResponse {
 export interface ICreateChatResponse {
     modelMessage: string;
     referenceId: string;
+}
+
+export interface IChatResponse {
+    chats: IChat[];
 }

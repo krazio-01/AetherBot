@@ -3,7 +3,6 @@ import { useState, useEffect, useRef, MouseEvent, ChangeEvent } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import useAppStore from '@/store/store';
-import axios, { AxiosError } from 'axios';
 import { useTheme } from 'next-themes';
 import Chats from '@/components/layout/sidebar/chats/Chats';
 import ToggleButton from '@/components/Ui/Sidebar-Toggle/ToggleButton';
@@ -13,13 +12,16 @@ import { toast } from 'sonner';
 import { MdDarkMode } from 'react-icons/md';
 import { FaPlus } from 'react-icons/fa6';
 import { IoSettingsOutline } from 'react-icons/io5';
-import { IChat, IMenuItem, IResponseWrapper } from '@/types';
+import { IMenuItem } from '@/types';
+import { useRequest } from '@/hooks/useRequest';
+import { IChatResponse } from '@/types/chat';
 import './sidebar.css';
 
 const Sidebar = () => {
     const chats = useAppStore((state) => state.chats);
     const setChats = useAppStore((state) => state.setChats);
     const isNewChat = useAppStore((state) => state.isNewChat);
+    const setIsNewChat = useAppStore((state) => state.setIsNewChat);
     const removeChat = useAppStore((state) => state.removeChat);
     const sidebarIsOpen = useAppStore((state) => state.sidebarIsOpen);
 
@@ -28,6 +30,7 @@ const Sidebar = () => {
     const [chatsLoading, setChatsLoading] = useState<boolean>(true);
 
     const { theme, setTheme } = useTheme();
+    const { getRequest } = useRequest();
 
     const settingsRef = useRef<HTMLButtonElement>(null);
     const params = useParams();
@@ -59,22 +62,19 @@ const Sidebar = () => {
             try {
                 setChatsLoading(true);
 
-                const { data } = await axios.get<IResponseWrapper<{ chats: IChat[] }>>('/api/chat/fetchChats');
+                const res = await getRequest<IChatResponse>('/chat/fetchChats');
 
-                if (data.data?.chats) setChats(data.data.chats);
-            } catch (error) {
-                if (error instanceof AxiosError) {
-                    const errorData = error.response?.data as IResponseWrapper;
-                    toast.error(errorData?.message || 'Failed to fetch chats');
-                } else {
-                    toast.error('An unexpected error occurred');
-                }
+                if (res.success && res.data?.chats) setChats(res.data.chats);
+            } catch (error: any) {
+                toast.error(typeof error === 'string' ? error : 'Failed to fetch chats');
             } finally {
                 setChatsLoading(false);
+                if (isNewChat) setIsNewChat(false);
             }
         };
 
         fetchChats();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isNewChat, setChats]);
 
     const menuItems: IMenuItem[] = [
