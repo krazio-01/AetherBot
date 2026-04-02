@@ -43,6 +43,11 @@ export const POST = apiHandler(async (request: NextRequest) => {
     if (!image || !imageUrl) geminiResponse = await multiTurnConversation(prompt, history);
     else geminiResponse = await generateTextFromImageAndPrompt(prompt, image);
 
+    if (!userId) {
+        const guestChatid = `guest_${uuidv4()}`;
+        return ResponseWrapper.successWithData({ modelMessage: geminiResponse, referenceId: guestChatid }, 200);
+    }
+
     let chatDoc;
     if (!referenceId) {
         chatDoc = new Chat({
