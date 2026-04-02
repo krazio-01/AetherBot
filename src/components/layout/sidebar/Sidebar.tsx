@@ -15,6 +15,7 @@ import { IoSettingsOutline } from 'react-icons/io5';
 import { IMenuItem } from '@/types';
 import { useRequest } from '@/hooks/useRequest';
 import { IChatResponse } from '@/types/chat';
+import { useSession } from 'next-auth/react';
 import './sidebar.css';
 
 const Sidebar = () => {
@@ -24,6 +25,10 @@ const Sidebar = () => {
     const setIsNewChat = useAppStore((state) => state.setIsNewChat);
     const removeChat = useAppStore((state) => state.removeChat);
     const sidebarIsOpen = useAppStore((state) => state.sidebarIsOpen);
+    const setMessages = useAppStore((state) => state.setMessages);
+    const setInput = useAppStore((state) => state.setInput);
+
+    const { status } = useSession();
 
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -58,6 +63,15 @@ const Sidebar = () => {
     };
 
     useEffect(() => {
+        if (status === 'loading') return;
+
+        if (status === 'unauthenticated') {
+            setChatsLoading(false);
+            setChats([]);
+            if (isNewChat) setIsNewChat(false);
+            return;
+        }
+
         const fetchChats = async () => {
             try {
                 setChatsLoading(true);
@@ -76,6 +90,11 @@ const Sidebar = () => {
         fetchChats();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isNewChat, setChats]);
+
+    const handleNewChatClick = () => {
+        setMessages([]);
+        setInput('');
+    };
 
     const menuItems: IMenuItem[] = [
         {
@@ -98,7 +117,7 @@ const Sidebar = () => {
             <div className="sidebar-header">
                 <ToggleButton />
 
-                <Link href="/chat" className="newchat">
+                <Link href="/chat" onClick={handleNewChatClick} className="newchat">
                     <FaPlus />
                     <span>New chat</span>
                 </Link>

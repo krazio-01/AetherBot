@@ -50,7 +50,14 @@ const ChatPage = ({ params }: IChatPageProps) => {
     };
 
     useEffect(() => {
-        if (params.chatId) fetchMessages();
+        if (!params.chatId) return;
+
+        if (params.chatId.startsWith('guest_')) {
+            setIsNewChat(false);
+            return;
+        }
+
+        fetchMessages();
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [params.chatId]);
