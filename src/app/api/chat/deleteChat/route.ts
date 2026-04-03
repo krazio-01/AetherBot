@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import connectToDB from '@/utils/dbConnect';
 import Chat from '@/models/chatModel';
-import Message from '@/models/messageModel';
+import Interaction from '@/models/interactionModel';
 import cloudinary from '@/utils/cloudinaryConfig';
 import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
@@ -17,12 +17,12 @@ export const DELETE = apiHandler(async (request: NextRequest) => {
     const chat = await Chat.findOne({ referenceId: chatId });
     if (!chat) throw new ErrorWrapper(404, 'Chat not found');
 
-    const messagesWithImages = await Message.find({
+    const interactionsWithImages = await Interaction.find({
         chatId: chatId,
         image: { $exists: true, $ne: null },
     });
 
-    const imageUrls: string[] = messagesWithImages.map((message) => message.image as string);
+    const imageUrls: string[] = interactionsWithImages.map((interaction) => interaction.userMessage.image);
 
     await Promise.all(
         imageUrls.map(async (imageUrl) => {
@@ -35,7 +35,7 @@ export const DELETE = apiHandler(async (request: NextRequest) => {
     );
 
     await Chat.deleteOne({ referenceId: chatId });
-    await Message.deleteMany({ chatId: chatId });
+    await Interaction.deleteMany({ chatId: chatId });
 
     return ResponseWrapper.success(200, 'Chat deleted successfully');
 });
