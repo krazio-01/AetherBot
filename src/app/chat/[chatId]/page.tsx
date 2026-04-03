@@ -36,7 +36,7 @@ const ChatPage = ({ params }: IChatPageProps) => {
             setIsNewChat(false);
             cancel();
 
-            const res = await postRequest<IFetchMessagesResponse, IFetchMessagesRequest>('/message/fetchMessages', {
+            const res = await postRequest<IFetchMessagesResponse, IFetchMessagesRequest>('/interaction/fetchInteractons', {
                 chatId: params.chatId,
             });
 

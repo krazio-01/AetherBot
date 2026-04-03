@@ -38,6 +38,10 @@ const AuthForm = ({
         toast.promise(
             onSubmit().then((message) => {
                 if (additionalToast) additionalToast();
+                if (redirectUrl.includes('chat')) {
+                    router.refresh();
+                    return;
+                }
                 router.push(redirectUrl);
                 return message;
             }),
