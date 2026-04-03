@@ -1,4 +1,3 @@
-// app/api/chats/route.ts
 import { NextRequest } from 'next/server';
 import connectToDB from '@/utils/dbConnect';
 import { authOptions } from '../auth/[...nextauth]/options';
