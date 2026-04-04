@@ -1,19 +1,33 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
+import Header from '@/components/layout/header/Header';
+import AetherHologram from '@/components/Ui/AetherHologram/AetherHologram';
 import './index.css';
 
 export default function Home() {
     return (
-        <main className="main">
-            <div className="container">
-                <div className="home-logo">
-                    <Image src="/images/logo.png" alt="AetherBot" width={400} height={400} />
+        <main className="home-main">
+            <Header />
+
+            <div className="home-hero-section">
+                <div className="content-section">
+                    <h1 className="hero-title">
+                        Meet <span className="gradient-text">AetherBot</span>
+                    </h1>
+
+                    <div className="info-wrapper">
+                        <p className="hero-subtitle">
+                            Your next-generation AI assistant. Experience seamless, multimodal conversations powered by cutting-edge technology.
+                        </p>
+
+                        <div className="action-wrapper">
+                            <Link className="try-link" href={'/chat'}>Try Without Account!</Link>
+                        </div>
+                    </div>
                 </div>
-                <h2>Welcome to AetherBot</h2>
-                <div className="home-links">
-                    <Link href="/login">Sign In</Link>
-                    <Link href="/register">Sign Up</Link>
+
+                <div className="animation-section">
+                    <AetherHologram />
                 </div>
             </div>
         </main>
@@ -22,8 +36,8 @@ export default function Home() {
 
 export function generateMetadata(): Metadata {
     return {
-        title: 'AetherBot - SignIn or SignUp',
+        title: 'AetherBot - The Next-Gen AI Assistant',
         description:
-            'Join AetherBot to experience seamless AI-powered conversations. Login or register to access personalized assistance, 24/7 support, and cutting-edge AI technology designed to enhance your digital interactions.',
+            'Join AetherBot to experience seamless AI-powered conversations. Try it for free as a guest or create an account for personalized assistance.',
     };
 }
