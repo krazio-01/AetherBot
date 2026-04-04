@@ -19,8 +19,10 @@ const Header = async () => {
             </div>
 
             <div className="logo">
-                <Image src={Logo} alt="logo" width={45} height={45} />
-                <span>AetherBot</span>
+                <Link href={user ? '/chat' : '/'}>
+                    <Image src={Logo} alt="logo" width={45} height={45} />
+                    <span>AetherBot</span>
+                </Link>
             </div>
 
             {user ? (
