@@ -76,7 +76,7 @@ const Sidebar = () => {
             try {
                 setChatsLoading(true);
 
-                const res = await getRequest<IChatResponse>('/chat/fetchChats');
+                const res = await getRequest<IChatResponse>('/chats');
 
                 if (res.success && res.data?.chats) setChats(res.data.chats);
             } catch (error: any) {
@@ -88,8 +88,7 @@ const Sidebar = () => {
         };
 
         fetchChats();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isNewChat, setChats]);
+    }, [isNewChat, status]);
 
     const handleNewChatClick = () => {
         setMessages([]);

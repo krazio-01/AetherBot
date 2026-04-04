@@ -138,7 +138,7 @@ const Footer = () => {
             formData.append('history', JSON.stringify(history));
             formData.append('imageUrl', uploadState.imageUrl || '');
 
-            const res = await chatReq<ICreateChatResponse, FormData>('/chat/createChat', formData);
+            const res = await chatReq<ICreateChatResponse, FormData>('/chats', formData);
 
             if (res.success && res.data) {
                 const modelMessage = createChatMessage(ChatRole.MODEL, res.data.modelMessage);

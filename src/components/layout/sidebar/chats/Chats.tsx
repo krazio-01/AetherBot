@@ -38,9 +38,7 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
 
     const deleteChat = async (): Promise<string> => {
         try {
-            const res = await deleteRequest<void>('/chat/deleteChat', {
-                params: { chatId: chat.referenceId },
-            });
+            const res = await deleteRequest<void>(`/chats/${chat.referenceId}`);
 
             if (res.success) return res.message || 'Chat deleted successfully';
 
