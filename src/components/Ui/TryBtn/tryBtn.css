@@ -15,7 +15,7 @@
 
     &:hover {
         background: oklch(from var(--text-clr) calc(l - 0.08) c h);
-        transform: translateY(-1px); /* Lifts up */
+        transform: translateY(1px);
         box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
     }
 
