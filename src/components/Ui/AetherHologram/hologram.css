@@ -415,3 +415,58 @@
         width: 100%;
     }
 }
+
+@media (max-width: 599px) {
+    .hologram-wrapper {
+        height: 380px;
+
+        .scene-root {
+            width: 260px;
+            height: 320px;
+
+            .ambient-glow {
+                filter: blur(40px);
+            }
+
+            .main-display .display-content {
+                padding: 1.25rem;
+
+                .view-scanner .paper-mockup {
+                    width: 95%;
+                    height: 120px;
+                }
+
+                .view-editor {
+                    font-size: 0.75rem;
+                    padding: 0.8rem;
+                }
+            }
+
+            .interactive-badge {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.8rem;
+                gap: 0.4rem;
+
+                &.pos-top-right {
+                    top: -15px;
+                    right: -10px;
+                }
+
+                &.pos-bottom-right {
+                    bottom: 30px;
+                    right: -10px;
+                    transform: translateZ(30px);
+                }
+
+                &.pos-bottom-right.is-active {
+                    transform: translateZ(40px) scale(1.05);
+                }
+
+                &.pos-bottom-left {
+                    bottom: -15px;
+                    left: -10px;
+                }
+            }
+        }
+    }
+}
