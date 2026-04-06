@@ -2,7 +2,8 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Header from '@/components/layout/header/Header';
 import AetherHologram from '@/components/Ui/AetherHologram/AetherHologram';
-import { IoTrainOutline, IoEyeOutline, IoFlashOutline, IoShieldCheckmarkOutline } from 'react-icons/io5';
+import { IoChatbubblesOutline, IoImageOutline, IoCloudUploadOutline, IoConstructOutline } from 'react-icons/io5';
+import TryButton from '@/components/Ui/TryBtn/TryButton';
 import './index.css';
 
 export default function Home() {
@@ -13,19 +14,17 @@ export default function Home() {
             <section className="home-hero-section">
                 <div className="content-section">
                     <h1 className="hero-title">
-                        Meet <span className="gradient-text">AetherBot</span>
+                        Chat with <span className="gradient-text">AetherBot</span>
                     </h1>
 
                     <div className="info-wrapper">
                         <p className="hero-subtitle">
-                            Your next-generation AI assistant. Experience seamless, multimodal conversations powered by
-                            cutting-edge technology.
+                            A smart conversational assistant. Have natural, continuous chats and upload images for
+                            instant visual analysis.
                         </p>
 
                         <div className="action-wrapper">
-                            <Link className="try-link" href={'/chat'}>
-                                Try Without Account!
-                            </Link>
+                            <TryButton />
                         </div>
                     </div>
                 </div>
@@ -37,57 +36,61 @@ export default function Home() {
 
             <section className="features-section">
                 <div className="features-header">
-                    <h2 className="section-title">Beyond Standard Chat</h2>
-                    <p className="section-subtitle">Purpose-built tools designed to accelerate your workflow.</p>
+                    <h2 className="section-title">Current Features</h2>
+                    <p className="section-subtitle">A transparent look at what's under the hood right now.</p>
                 </div>
 
                 <div className="features-grid">
                     <div className="feature-card">
                         <div className="icon-wrapper">
-                            <IoTrainOutline />
+                            <IoChatbubblesOutline />
                         </div>
-                        <h3>Advanced Reasoning</h3>
+                        <h3>Multi-Turn Context</h3>
                         <p>
-                            Complex logic parsing and multi-step problem solving utilizing state-of-the-art neural
-                            architecture.
+                            Maintains conversation history to allow for natural, continuous dialogue using standard
+                            context window management.
                         </p>
                     </div>
 
                     <div className="feature-card">
                         <div className="icon-wrapper">
-                            <IoEyeOutline />
+                            <IoImageOutline />
                         </div>
-                        <h3>Vision Context</h3>
+                        <h3>Image Analysis</h3>
                         <p>
-                            Upload documents, diagrams, and images. AetherBot sees what you see and analyzes it
-                            instantly.
+                            Upload an image and the Gemini 2.5 Flash vision model will analyze it and respond based on
+                            the visual context.
                         </p>
                     </div>
 
                     <div className="feature-card">
                         <div className="icon-wrapper">
-                            <IoFlashOutline />
+                            <IoCloudUploadOutline />
                         </div>
-                        <h3>Real-time Execution</h3>
+                        <h3>Cloudinary Integration</h3>
                         <p>
-                            Generate, refine, and execute code snippets securely within your isolated chat environment.
+                            For authenticated users, uploaded images are securely processed and hosted via Cloudinary
+                            for persistent access.
                         </p>
                     </div>
 
                     <div className="feature-card">
                         <div className="icon-wrapper">
-                            <IoShieldCheckmarkOutline />
+                            <IoConstructOutline />
                         </div>
-                        <h3>Zero-Trace Privacy</h3>
-                        <p>Your conversations are ephemeral. We don't train on your proprietary data or source code.</p>
+                        <h3>Active Roadmap</h3>
+                        <p>
+                            Currently researching and developing integrations for native AI image and video generation
+                            features.
+                        </p>
                     </div>
                 </div>
             </section>
 
             <section className="bottom-cta-section">
                 <div className="cta-container">
-                    <h2>Ready to upgrade your intelligence?</h2>
-                    <p>Join thousands of developers and creatives building the future with AetherBot.</p>
+                    <h2>Want to test the integration?</h2>
+                    <p>Try it out as a guest or create an account to test the Cloudinary image uploads.</p>
                     <Link className="try-link-large" href={'/login'}>
                         Create Free Account
                     </Link>
@@ -98,11 +101,17 @@ export default function Home() {
                 <div className="footer-content">
                     <div className="footer-logo">
                         <span className="gradient-text">AetherBot</span>
-                        <p>© {new Date().getFullYear()} AetherBot Inc. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} AetherBot. Open for feedback.</p>
                     </div>
+
                     <div className="footer-links">
-                        <Link href="/">Privacy Policy</Link>
-                        <Link href="/">Terms of Service</Link>
+                        <a href="https://github.com/krazio-01/AetherBot" target="_blank" rel="noopener noreferrer">
+                            GitHub Repo
+                        </a>
+
+                        <a href="https://mdamman.netlify.app/" target="_blank" rel="noopener noreferrer">
+                            Portfolio
+                        </a>
                     </div>
                 </div>
             </footer>
@@ -112,8 +121,8 @@ export default function Home() {
 
 export function generateMetadata(): Metadata {
     return {
-        title: 'AetherBot - The Next-Gen AI Assistant',
+        title: 'AetherBot - Your AI Conversational Workspace',
         description:
-            'Join AetherBot to experience seamless AI-powered conversations. Try it for free as a guest or create an account for personalized assistance.',
+            'Chat naturally with full context memory, upload complex images, and get instant visual analysis to speed up your workflow.',
     };
 }
