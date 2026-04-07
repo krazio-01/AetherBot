@@ -13,6 +13,7 @@ import Avatar3 from '../../../../public/images/avatar3.jpeg';
 import Avatar4 from '../../../../public/images/avatar4.jpeg';
 import { IAuthField } from '@/types';
 import { ISignupRequest } from '@/types/auth';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import '../auth.css';
 
 const Page = () => {
@@ -56,47 +57,57 @@ const Page = () => {
     };
 
     return (
-        <div className="auth-container">
-            <div className="form-container register">
-                <div className="auth-form-header">
-                    <FaUserCircle />
-                    <h2>Create Account!</h2>
+        <div className="auth-layout">
+            <div className="auth-visual">
+                <div className="lottie-wrapper">
+                    <DotLottieReact src="./animations/ghost.lottie" loop autoplay />
                 </div>
+            </div>
 
-                <AuthForm
-                    formFields={formFields}
-                    refs={refs}
-                    loading={isPending}
-                    onSubmit={handleRegistration}
-                    loadingText="Signing up..."
-                    redirectUrl="/login"
-                    additionalToast={additionalToast}
-                    submitButtonText="Sign Up"
-                />
-
-                <div className="other-providers">
-                    <div className="divider">
-                        <span>or</span>
+            <div className="auth-container">
+                <div className="form-container register">
+                    <div className="auth-form-header">
+                        <FaUserCircle />
+                        <h2>Create Account!</h2>
+                        <p>Join the future of intelligent conversations</p>
                     </div>
 
-                    <div className="providers">
-                        <AuthProviderBtn
-                            loading={isPending}
-                            provider="discord"
-                            btnText="Discord"
-                            icon={<FaDiscord />}
-                        />
+                    <AuthForm
+                        formFields={formFields}
+                        refs={refs}
+                        loading={isPending}
+                        onSubmit={handleRegistration}
+                        loadingText="Signing up..."
+                        redirectUrl="/login"
+                        additionalToast={additionalToast}
+                        submitButtonText="Sign Up"
+                    />
 
-                        <AuthProviderBtn loading={isPending} provider="github" btnText="Github" icon={<FaGithub />} />
+                    <div className="other-providers">
+                        <div className="divider">
+                            <span>or</span>
+                        </div>
+
+                        <div className="providers">
+                            <AuthProviderBtn
+                                loading={isPending}
+                                provider="discord"
+                                btnText="Discord"
+                                icon={<FaDiscord />}
+                            />
+                            <AuthProviderBtn
+                                loading={isPending}
+                                provider="github"
+                                btnText="Github"
+                                icon={<FaGithub />}
+                            />
+                        </div>
                     </div>
-                </div>
 
-                <p className="auth-form-footer">
-                    Already have an account?{' '}
-                    <Link aria-disabled={true} href="/login">
-                        Sign In
-                    </Link>
-                </p>
+                    <p className="auth-form-footer">
+                        Already have an account? <Link href="/login">Sign In</Link>
+                    </p>
+                </div>
             </div>
         </div>
     );
