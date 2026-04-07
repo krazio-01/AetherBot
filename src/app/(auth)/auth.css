@@ -1,89 +1,194 @@
 /* singin and signup css */
-.auth-container {
+.auth-layout {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100svh;
-}
+    min-height: 100svh;
+    background-color: var(--bg-clr);
 
-.auth-container .form-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 2rem;
-    width: clamp(300px, 55%, 450px);
-    background-color: var(--menu-bg);
-    padding: 2rem;
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-}
+    .auth-visual {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(25, 20, 30, 0.1) 100%);
 
-.form-container .auth-form-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-}
+        &::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(
+                circle,
+                rgba(168, 85, 247, 0.15) 0%,
+                rgba(59, 130, 246, 0.05) 50%,
+                transparent 70%
+            );
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            filter: blur(50px);
+            z-index: 0;
+            border-radius: 50%;
+        }
 
-.form-container .auth-form-header svg {
-    font-size: 1.5rem;
-    color: var(--blue);
-}
+        .lottie-wrapper {
+            width: 80%;
+            max-width: 600px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: scale(1.5);
+            z-index: 1;
+        }
+    }
 
-.form-container .auth-form-header p {
-    color: var(--light-text-clr);
-}
+    .auth-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
 
-/* other providers css */
-.other-providers {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-}
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2rem;
+            width: 100%;
+            max-width: 420px;
+            background-color: transparent;
 
-.other-providers .providers {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    gap: 1rem;
-}
+            .auth-form-header {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 0.75rem;
+                margin-bottom: 1rem;
 
-.providers button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0.5;
-    gap: 0.5rem;
-    padding: 1rem;
-    background-color: var(--menu-bg);
-    font-size: var(--fz-sm);
-    font-weight: bold;
-    color: var(--text-clr);
-    border: var(--menu-border);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, opacity 0.3s ease;
-}
+                svg {
+                    font-size: 1.8rem;
+                    color: #a855f7;
+                }
 
-.providers button:hover {
-    background-color: var(--items-hover);
-}
+                h2 {
+                    font-size: 1.75rem;
+                    font-weight: 600;
+                }
 
-.providers button:disabled {
-    background-color: #d0d0d0;
-    cursor: not-allowed;
-}
+                p {
+                    color: var(--light-text-clr);
+                    font-size: 0.95rem;
+                }
+            }
 
-.providers button:focus {
-    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.4);
-}
+            /* other providers css */
+            .other-providers {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 1.5rem;
 
-.auth-container .form-container .auth-form-footer {
-    color: var(--text-clr);
-    text-align: center;
+                .divider {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    text-align: center;
+                    color: var(--light-text-clr);
+                    font-size: 0.85rem;
+
+                    &::before,
+                    &::after {
+                        content: '';
+                        flex: 1;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    }
+
+                    span {
+                        padding: 0 1rem;
+                    }
+                }
+
+                .providers {
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    gap: 1rem;
+
+                    button {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex: 1;
+                        gap: 0.5rem;
+                        padding: 0.8rem;
+                        background-color: rgba(255, 255, 255, 0.03);
+                        font-size: 0.9rem;
+                        font-weight: 500;
+                        color: var(--text-clr);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+
+                        &:hover {
+                            background-color: rgba(255, 255, 255, 0.08);
+                            transform: translateY(-1px);
+                        }
+
+                        &:disabled {
+                            background-color: #3f3f46;
+                            color: #a1a1aa;
+                            cursor: not-allowed;
+                            transform: none;
+                        }
+
+                        &:focus {
+                            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.4);
+                            outline: none;
+                        }
+                    }
+                }
+            }
+
+            .auth-form-footer {
+                color: var(--light-text-clr);
+                text-align: center;
+                font-size: 0.9rem;
+                margin-top: 0.5rem;
+
+                a {
+                    color: #a855f7;
+                    font-weight: 600;
+                    text-decoration: none;
+                    transition: color 0.2s ease;
+
+                    &:hover {
+                        color: #c084fc;
+                        text-decoration: underline;
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 900px) {
+        flex-direction: column;
+
+        .auth-visual {
+            display: none;
+        }
+
+        .auth-container .form-container {
+            background-color: var(--menu-bg);
+            padding: 2.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    }
 }
 
 /* ---- verify email css ---- */
@@ -92,30 +197,30 @@
     align-items: center;
     justify-content: center;
     height: 100svh;
-}
 
-.verify-email-main div {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-}
+    div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
 
-.verify-email-main div h1 {
-    color: var(--blue);
-}
+        h1 {
+            color: var(--blue);
+        }
+    }
 
-.verify-email-main a {
-    display: inline-block;
-    color: #fff;
-    text-decoration: none;
-    padding: 0.7rem 1rem;
-    border-radius: var(--border-radius);
-    background-color: var(--blue);
-    transition: all 0.3s ease;
-}
+    a {
+        display: inline-block;
+        color: #fff;
+        text-decoration: none;
+        padding: 0.7rem 1rem;
+        border-radius: var(--border-radius);
+        background-color: var(--blue);
+        transition: all 0.3s ease;
 
-.verify-email-main a:hover {
-    background-color: var(--blue-hover);
+        &:hover {
+            background-color: var(--blue-hover);
+        }
+    }
 }
