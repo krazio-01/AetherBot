@@ -74,7 +74,7 @@ const Footer = () => {
             const formData = new FormData();
             formData.append('file', file);
 
-            const res = await uploadImgReq<IUploadImageResponse, FormData>('/upload/imgUpload', formData);
+            const res = await uploadImgReq<IUploadImageResponse, FormData>('/images', formData);
 
             if (res.success && res.data) {
                 setUploadState((prevState) => ({
@@ -107,7 +107,7 @@ const Footer = () => {
         });
 
         if (urlToDelete) {
-            deleteImgReq<void>('/upload/deleteImage', {
+            deleteImgReq<void>('/images', {
                 params: { imgUrl: urlToDelete },
             }).catch((error) => {
                 console.error('Failed to delete image on server', error);
