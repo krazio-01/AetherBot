@@ -5,6 +5,7 @@ import { MdLockReset, MdEmail } from 'react-icons/md';
 import { IAuthField } from '@/types';
 import { useRequest } from '@/hooks/useRequest';
 import { IPasswordResetRequest } from '@/types/auth';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import '../../auth.css';
 
 const Page = () => {
@@ -24,30 +25,37 @@ const Page = () => {
     };
 
     return (
-        <div className="auth-container">
-            <div className="form-container login">
-                <div className="auth-form-header">
-                    <MdLockReset />
-                    <h2>Reset your password</h2>
-                    <p
-                        style={{
-                            fontSize: 'var(--fz-sm)',
-                            textAlign: 'center',
-                        }}
-                    >
-                        Enter your email address and we will send you instructions to reset your password.
-                    </p>
+        <div className="auth-layout">
+            <div className="auth-visual">
+                <div className="lottie-wrapper">
+                    <DotLottieReact
+                        src="/animations/thinking.lottie"
+                        loop
+                        autoplay
+                    />
                 </div>
+            </div>
 
-                <AuthForm
-                    formFields={formFields}
-                    refs={refs}
-                    loading={isPending}
-                    onSubmit={handleChangeRequest}
-                    loadingText="Sending email..."
-                    redirectUrl="/forgot-password/request"
-                    submitButtonText="Continue"
-                />
+            <div className="auth-container">
+                <div className="form-container login">
+                    <div className="auth-form-header">
+                        <MdLockReset />
+                        <h2>Reset your password</h2>
+                        <p>
+                            Enter your email address and we will send you instructions to reset your password.
+                        </p>
+                    </div>
+
+                    <AuthForm
+                        formFields={formFields}
+                        refs={refs}
+                        loading={isPending}
+                        onSubmit={handleChangeRequest}
+                        loadingText="Sending email..."
+                        redirectUrl="/forgot-password/request"
+                        submitButtonText="Continue"
+                    />
+                </div>
             </div>
         </div>
     );

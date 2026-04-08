@@ -7,6 +7,7 @@ import { MdLockReset } from 'react-icons/md';
 import { FaLock } from 'react-icons/fa';
 import { IAuthField } from '@/types';
 import { IPasswordChangeRequest } from '@/types/auth';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import '../../auth.css';
 
 const PageInner = () => {
@@ -39,25 +40,37 @@ const PageInner = () => {
     };
 
     return (
-        <div className="auth-container">
-            <div className="form-container login">
-                <div className="auth-form-header">
-                    <MdLockReset />
-                    <h2>Reset your password</h2>
-                    <p style={{ fontSize: 'var(--fz-sm)', textAlign: 'center' }}>
-                        Enter a new password below to reset your password
-                    </p>
+        <div className="auth-layout">
+            <div className="auth-visual">
+                <div className="lottie-wrapper">
+                    <DotLottieReact
+                        src="/animations/waiting.lottie"
+                        loop
+                        autoplay
+                    />
                 </div>
+            </div>
 
-                <AuthForm
-                    formFields={formFields}
-                    refs={refs}
-                    loading={isPending}
-                    onSubmit={handleResetPassword}
-                    loadingText="Updating password..."
-                    redirectUrl="/login"
-                    submitButtonText="Reset Password"
-                />
+            <div className="auth-container">
+                <div className="form-container login">
+                    <div className="auth-form-header">
+                        <MdLockReset />
+                        <h2>Reset your password</h2>
+                        <p>
+                            Enter a new password below to reset your password
+                        </p>
+                    </div>
+
+                    <AuthForm
+                        formFields={formFields}
+                        refs={refs}
+                        loading={isPending}
+                        onSubmit={handleResetPassword}
+                        loadingText="Updating password..."
+                        redirectUrl="/login"
+                        submitButtonText="Reset Password"
+                    />
+                </div>
             </div>
         </div>
     );
