@@ -5,10 +5,6 @@ export enum ChatRole {
     MODEL = 'model',
 }
 
-export interface IFetchMessagesRequest {
-    chatId: string;
-}
-
 export interface IFetchMessagesResponse {
     messages: IMessage[];
 }

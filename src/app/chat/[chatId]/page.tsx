@@ -8,7 +8,7 @@ import { Oval } from 'react-loader-spinner';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 import { useRequest } from '@/hooks/useRequest';
-import { IFetchMessagesRequest, IFetchMessagesResponse } from '@/types/chat';
+import { IFetchMessagesResponse } from '@/types/chat';
 
 interface IChatPageProps {
     params: {
@@ -22,7 +22,7 @@ const ChatPage = ({ params }: IChatPageProps) => {
     const loading = useAppStore((state) => state.loading);
     const setIsNewChat = useAppStore((state) => state.setIsNewChat);
 
-    const { postRequest, isPending, cancel } = useRequest();
+    const { getRequest, isPending, cancel } = useRequest();
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
@@ -36,9 +36,7 @@ const ChatPage = ({ params }: IChatPageProps) => {
             setIsNewChat(false);
             cancel();
 
-            const res = await postRequest<IFetchMessagesResponse, IFetchMessagesRequest>('/interaction/fetchInteractons', {
-                chatId: params.chatId,
-            });
+            const res = await getRequest<IFetchMessagesResponse>(`/interactions?chatId=${params.chatId}`);
 
             if (res.success && res.data) setMessages(res.data.messages);
         } catch (error) {
