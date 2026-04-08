@@ -38,8 +38,8 @@ const AuthForm = ({
         toast.promise(
             onSubmit().then((message) => {
                 if (additionalToast) additionalToast();
-                router.refresh();
-                router.push(redirectUrl);
+                if (redirectUrl.includes('chat')) window.location.href = redirectUrl;
+                else router.push(redirectUrl);
                 return message;
             }),
             {
