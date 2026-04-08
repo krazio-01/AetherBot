@@ -1,0 +1,59 @@
+.not-found-container {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-clr);
+    color: var(--text-clr);
+    text-align: center;
+    padding: 2rem;
+
+    .not-found-content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+
+        & > div {
+            width: 100%;
+        }
+
+        .not-found-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+
+            .btn-primary,
+            .btn-secondary {
+                padding: 0.6rem 1.4rem;
+                border-radius: var(--border-radius);
+                font-weight: 600;
+                transition: all 0.2s ease;
+                font-size: var(--fz-sm);
+            }
+
+            .btn-primary {
+                background-color: var(--blue);
+                color: #fff;
+                border: 1px solid var(--blue);
+
+                &:hover {
+                    background-color: var(--blue-hover);
+                    border-color: var(--blue-hover);
+                }
+            }
+
+            .btn-secondary {
+                border: var(--menu-border);
+                background-color: var(--components-bg);
+                color: var(--text-clr);
+
+                &:hover {
+                    background-color: var(--items-hover);
+                }
+            }
+        }
+    }
+}
