@@ -11,6 +11,7 @@ import { RxCross2 } from 'react-icons/rx';
 import { IMessage } from '@/types';
 import { useRequest } from '@/hooks/useRequest';
 import { ChatRole, ICreateChatResponse, IUploadImageResponse } from '@/types/chat';
+import { useSession } from 'next-auth/react';
 import './footer.css';
 
 interface IUploadState {
@@ -21,6 +22,9 @@ interface IUploadState {
 }
 
 const Footer = () => {
+    const { status } = useSession();
+    const isGuest = status === 'unauthenticated';
+
     const input = useAppStore((state) => state.input);
     const setInput = useAppStore((state) => state.setInput);
     const loading = useAppStore((state) => state.loading);
@@ -67,8 +71,13 @@ const Footer = () => {
             ...prevState,
             isImage: localImageUrl,
             file: file,
-            imageLoading: true,
+            imageLoading: !isGuest,
         }));
+
+        if (isGuest) {
+            if (e.target) e.target.value = '';
+            return;
+        }
 
         try {
             const formData = new FormData();
@@ -166,7 +175,8 @@ const Footer = () => {
 
         if (!input.trim()) return;
 
-        const newMessage = createChatMessage(ChatRole.USER, input, uploadState.imageUrl);
+        const imageToDisplay = uploadState.imageUrl || uploadState.isImage || '';
+        const newMessage = createChatMessage(ChatRole.USER, input, imageToDisplay);
 
         if (!chatId) {
             toast.promise(

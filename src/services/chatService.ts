@@ -46,8 +46,8 @@ export async function createChatInteraction(params: IProcessChatParams): Promise
     }
 
     let geminiResponse: string;
-    if (!image || !imageUrl) geminiResponse = await multiTurnConversation(prompt, geminiHistory);
-    else geminiResponse = await generateTextFromImageAndPrompt(prompt, image);
+    if (image) geminiResponse = await generateTextFromImageAndPrompt(prompt, image);
+    else geminiResponse = await multiTurnConversation(prompt, geminiHistory);
 
     if (!userId) {
         const currentGuestId = referenceId?.startsWith('guest_') ? referenceId : `guest_${uuidv4()}`;
