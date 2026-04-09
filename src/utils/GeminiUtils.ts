@@ -7,7 +7,7 @@ import {
     SafetySetting,
 } from '@google/generative-ai';
 
-const apiKey: string = process.env.GEMINI_API_KEY;
+const apiKey: string = process.env.GEMINI_API_KEY as string;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
@@ -37,43 +37,56 @@ const safetySettings: SafetySetting[] = [
     },
 ];
 
-const multiTurnConversation = async (prompt: string, history?: Content[]): Promise<string> => {
-    try {
-        const chatSession = model.startChat({
-            generationConfig,
-            safetySettings,
-            history: history || [],
-        });
+const withRetry = async <T>(operation: () => Promise<T>, retries = 3): Promise<T> => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await operation();
+        } catch (error: any) {
+            const is503Error = error?.message?.includes('503') || error?.status === 503;
 
-        const { response } = await chatSession.sendMessage(prompt);
+            if (is503Error && i < retries - 1) {
+                const waitTime = (i + 1) * 1500;
+                await new Promise((resolve) => setTimeout(resolve, waitTime));
+                continue;
+            }
 
-        return response.text();
-    } catch (error) {
-        throw new Error(error instanceof Error ? error.message : 'Failed to generate conversation');
+            throw new Error(error instanceof Error ? error.message : 'Gemini API request failed');
+        }
     }
+    throw new Error('Failed to reach Gemini API after multiple attempts.');
+};
+
+const multiTurnConversation = async (prompt: string, history?: Content[]): Promise<string> => {
+    const chatSession = model.startChat({
+        generationConfig,
+        safetySettings,
+        history: history || [],
+    });
+
+    return withRetry(async () => {
+        const { response } = await chatSession.sendMessage(prompt);
+        return response.text();
+    });
 };
 
 const generateTextFromImageAndPrompt = async (prompt: string, image: File | Blob): Promise<string> => {
-    try {
-        if (!image) throw new Error('No image provided');
+    if (!image) throw new Error('No image provided');
 
-        const imageData = await image.arrayBuffer();
-        const buffer = Buffer.from(imageData);
+    const imageData = await image.arrayBuffer();
+    const buffer = Buffer.from(imageData);
+    const base64String = buffer.toString('base64');
 
-        const base64String = buffer.toString('base64');
+    const imageObj = {
+        inlineData: {
+            data: base64String,
+            mimeType: image.type || 'image/jpeg',
+        },
+    };
 
-        const imageObj = {
-            inlineData: {
-                data: base64String,
-                mimeType: image.type || 'image/jpeg',
-            },
-        };
-
+    return withRetry(async () => {
         const { response } = await model.generateContent([prompt, imageObj]);
         return response.text();
-    } catch (error) {
-        throw new Error(error instanceof Error ? error.message : 'Failed to generate text from image');
-    }
+    });
 };
 
 export { multiTurnConversation, generateTextFromImageAndPrompt };
