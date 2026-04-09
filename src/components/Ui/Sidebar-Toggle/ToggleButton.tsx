@@ -10,7 +10,7 @@ const ToggleButton = () => {
 
     const pathname = usePathname();
 
-    if (pathname !== '/chat') return null;
+    if (!pathname.includes('chat')) return null;
 
     return (
         <div>
