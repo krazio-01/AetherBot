@@ -26,6 +26,7 @@ export const useChatSubmit = (chatId: string | undefined, uploadState: IUploadSt
         imageUrl: string = '',
         isError: boolean = false,
     ): IMessage => ({
+        client_id: crypto.randomUUID(),
         role,
         parts: [{ text }],
         image: imageUrl,
