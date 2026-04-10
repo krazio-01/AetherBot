@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, ChangeEvent, FormEvent, KeyboardEvent } from 'react';
+import React, { useState, useRef, useEffect, ChangeEvent, FormEvent, KeyboardEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import useAppStore from '@/store/store';
@@ -17,7 +17,7 @@ import './footer.css';
 interface IUploadState {
     imageLoading: boolean;
     file: File | null;
-    isImage: string | null;
+    previewUrl: string | null;
     imageUrl: string;
 }
 
@@ -34,21 +34,33 @@ const Footer = () => {
     const updateMessages = useAppStore((state) => state.updateMessages);
 
     const { postRequest: uploadImgReq, deleteRequest: deleteImgReq, cancel: cancelUpload } = useRequest();
-
     const { postRequest: chatReq } = useRequest();
 
     const [uploadState, setUploadState] = useState<IUploadState>({
         imageLoading: false,
         file: null,
-        isImage: null,
+        previewUrl: null,
         imageUrl: '',
     });
 
     const params = useParams();
     const chatId = params?.chatId as string | undefined;
     const router = useRouter();
-
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        return () => {
+            if (uploadState.previewUrl) URL.revokeObjectURL(uploadState.previewUrl);
+        };
+    }, [uploadState.previewUrl]);
+
+    const adjustTextareaHeight = (reset: boolean = false) => {
+        if (!textareaRef.current) return;
+        textareaRef.current.style.height = 'auto';
+        if (!reset) {
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    };
 
     const createChatMessage = (
         role: ChatRole,
@@ -66,16 +78,19 @@ const Footer = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        if (uploadState.previewUrl) URL.revokeObjectURL(uploadState.previewUrl);
+
         const localImageUrl = URL.createObjectURL(file);
-        setUploadState((prevState) => ({
-            ...prevState,
-            isImage: localImageUrl,
+
+        setUploadState((prev) => ({
+            ...prev,
+            previewUrl: localImageUrl,
             file: file,
             imageLoading: !isGuest,
         }));
 
         if (isGuest) {
-            if (e.target) e.target.value = '';
+            e.target.value = '';
             return;
         }
 
@@ -86,32 +101,33 @@ const Footer = () => {
             const res = await uploadImgReq<IUploadImageResponse, FormData>('/images', formData);
 
             if (res.success && res.data) {
-                setUploadState((prevState) => ({
-                    ...prevState,
+                setUploadState((prev) => ({
+                    ...prev,
                     imageUrl: res.data!.imgUrl,
                 }));
             }
-        } catch (error: any) {
-            if (error?.name === 'AbortError' || error?.message?.includes('canceled')) return;
-            toast.error(typeof error === 'string' ? error : 'Image upload failed');
+        } catch (error: unknown) {
+            if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('canceled'))) {
+                return;
+            }
+            const errorMessage = error instanceof Error ? error.message : 'Image upload failed';
+            toast.error(typeof error === 'string' ? error : errorMessage);
         } finally {
-            if (e.target) e.target.value = '';
-            setUploadState((prevState) => ({
-                ...prevState,
-                imageLoading: false,
-            }));
+            e.target.value = '';
+            setUploadState((prev) => ({ ...prev, imageLoading: false }));
         }
     };
 
     const handleCancelImage = () => {
         cancelUpload();
-
         const urlToDelete = uploadState.imageUrl;
+
+        if (uploadState.previewUrl) URL.revokeObjectURL(uploadState.previewUrl);
 
         setUploadState({
             imageLoading: false,
             file: null,
-            isImage: null,
+            previewUrl: null,
             imageUrl: '',
         });
 
@@ -130,18 +146,13 @@ const Footer = () => {
         try {
             setLoading(true);
             setInput('');
-            setUploadState((prevState) => ({
-                ...prevState,
-                isImage: null,
-            }));
-
-            if (textareaRef.current) textareaRef.current.style.height = 'auto';
+            setUploadState((prev) => ({ ...prev, previewUrl: null }));
+            adjustTextareaHeight(true);
 
             const history = messages.map(({ image, isError, ...msg }: IMessage) => msg);
-
             const formData = new FormData();
-            if (uploadState.file) formData.append('file', uploadState.file);
 
+            if (uploadState.file) formData.append('file', uploadState.file);
             formData.append('referenceId', currentChatId || '');
             formData.append('prompt', input);
             formData.append('history', JSON.stringify(history));
@@ -153,18 +164,19 @@ const Footer = () => {
                 const modelMessage = createChatMessage(ChatRole.MODEL, res.data.modelMessage);
                 updateMessages(modelMessage);
 
-                setUploadState((prevState) => ({
-                    ...prevState,
+                setUploadState((prev) => ({
+                    ...prev,
                     file: null,
                     imageUrl: '',
                 }));
 
                 return res.data.referenceId;
             }
-        } catch (error) {
-            const errorMessage = typeof error === 'string' ? error : 'An unexpected error occurred.';
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
             const modelMessage = createChatMessage(ChatRole.MODEL, errorMessage, '', true);
             updateMessages(modelMessage);
+            throw new Error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -172,24 +184,23 @@ const Footer = () => {
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement> | KeyboardEvent<HTMLTextAreaElement>) => {
         e.preventDefault();
-
         if (!input.trim()) return;
 
-        const imageToDisplay = uploadState.imageUrl || uploadState.isImage || '';
+        const imageToDisplay = uploadState.imageUrl || uploadState.previewUrl || '';
         const newMessage = createChatMessage(ChatRole.USER, input, imageToDisplay);
 
         if (!chatId) {
             toast.promise(
                 updateChat(chatId, newMessage).then((referenceId) => {
-                    setIsNewChat(true);
-                    if (referenceId !== undefined) {
+                    if (referenceId) {
+                        setIsNewChat(true);
                         router.push(`/chat/${referenceId}`);
                     }
                 }),
                 {
                     loading: 'Generating response...',
                     success: 'Conversation initialized!',
-                    error: 'Error initializing conversation',
+                    error: (err) => err.message,
                 },
             );
         } else {
@@ -208,20 +219,21 @@ const Footer = () => {
         <div className="input-box">
             <form className="footer-input-form" onSubmit={handleSubmit}>
                 <div className="prompt">
-                    {uploadState.isImage && (
+                    {uploadState.previewUrl && (
                         <div>
                             <div className="promptImg-container">
                                 <button
                                     type="button"
                                     onClick={handleCancelImage}
                                     className={`prompt-cancel-btn ${uploadState.imageLoading ? 'loading' : ''}`}
+                                    aria-label="Cancel image upload"
                                 >
                                     <RxCross2 />
                                 </button>
                                 <Image
-                                    src={uploadState.isImage}
+                                    src={uploadState.previewUrl}
                                     className={`prompt-img ${uploadState.imageLoading ? 'loading' : ''}`}
-                                    alt="prompt-image"
+                                    alt="User prompt attachment"
                                     width={75}
                                     height={75}
                                 />
@@ -239,19 +251,17 @@ const Footer = () => {
                         value={input}
                         onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
                             setInput(e.target.value);
-                            if (textareaRef.current) {
-                                textareaRef.current.style.height = 'auto';
-                                textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-                            }
+                            adjustTextareaHeight();
                         }}
                         onKeyDown={handleKeyDown}
                         disabled={loading}
                         rows={1}
+                        aria-label="Chat input"
                     />
                 </div>
 
                 <div className="footer-input-actions">
-                    <label htmlFor="image" className="image-label">
+                    <label htmlFor="image" className="image-label" aria-label="Upload image">
                         <LuImagePlus />
                     </label>
                     <input
@@ -266,6 +276,7 @@ const Footer = () => {
                         type="submit"
                         disabled={loading || !input.trim() || uploadState.imageLoading}
                         className={`send-btn ${loading || !input.trim() || uploadState.imageLoading ? 'disabled' : ''}`}
+                        aria-label="Send message"
                     >
                         <IoMdSend />
                     </button>
