@@ -36,6 +36,7 @@ export interface IMessagePart {
 }
 
 export interface IMessage {
+    client_id?: string;
     role: ChatRole;
     parts: IMessagePart[];
     image?: string;
