@@ -1,10 +1,9 @@
-// src/services/chatService.ts
 import Chat from '@/models/chatModel';
 import Interaction from '@/models/interactionModel';
 import { multiTurnConversation, generateTextFromImageAndPrompt } from '@/utils/GeminiUtils';
 import cloudinary from '@/utils/cloudinaryConfig';
 import { v4 as uuidv4 } from 'uuid';
-import { Content } from '@google/generative-ai';
+import { Content } from '@google/genai';
 import { ChatRole, ICreateChatResponse } from '@/types/chat';
 import { IChat } from '@/types';
 
