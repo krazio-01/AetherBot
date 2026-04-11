@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import useAppStore from '@/store/store';
@@ -16,51 +16,64 @@ interface IChatPageProps {
     };
 }
 
-const ChatPage = ({ params }: IChatPageProps) => {
+const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
     const messages = useAppStore((state) => state.messages);
     const setMessages = useAppStore((state) => state.setMessages);
     const loading = useAppStore((state) => state.loading);
     const setIsNewChat = useAppStore((state) => state.setIsNewChat);
 
     const { getRequest, isPending, cancel } = useRequest();
-
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
     const { data: session } = useSession();
     const user = session?.user;
 
-    const fetchMessages = async () => {
-        try {
-            setMessages([]);
-            setIsNewChat(false);
-            cancel();
-
-            const res = await getRequest<IFetchMessagesResponse>(`/interactions?chatId=${params.chatId}`);
-
-            if (res.success && res.data) setMessages(res.data.messages);
-        } catch (error) {
-            if (axios.isCancel(error) || error?.name === 'AbortError') return;
-
-            router.push('/chat');
-            toast.error(typeof error === 'string' ? error : 'Chat not found');
-        }
-    };
-
     useEffect(() => {
-        if (!params.chatId) return;
+        if (!chatId) return;
 
-        if (params.chatId.startsWith('guest_')) {
+        if (chatId.startsWith('guest_')) {
+            if (messages.length === 0) {
+                toast.info('Guest chat session expired.');
+                router.push('/chat');
+                return;
+            }
+
             setIsNewChat(false);
             return;
         }
 
+        const fetchMessages = async () => {
+            try {
+                setMessages([]);
+                setIsNewChat(false);
+                cancel();
+
+                const res = await getRequest<IFetchMessagesResponse>(`/interactions?chatId=${chatId}`);
+
+                if (res.success && res.data) {
+                    const messagesWithIds = res.data.messages.map((msg) => ({
+                        ...msg,
+                        client_id: crypto.randomUUID(),
+                    }));
+                    setMessages(messagesWithIds);
+                }
+            } catch (error) {
+                if (axios.isCancel(error) || error?.name === 'AbortError') return;
+
+                router.push('/chat');
+                toast.error(typeof error === 'string' ? error : 'Chat not found');
+            }
+        };
+
         fetchMessages();
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [params.chatId]);
+        return () => {
+            cancel();
+        };
+    }, [chatId, setMessages, setIsNewChat, cancel, getRequest, router]);
 
-    useLayoutEffect(() => {
+    useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
@@ -83,7 +96,7 @@ const ChatPage = ({ params }: IChatPageProps) => {
                         <div className="boxi">
                             {messages.map((message, index) => (
                                 <Message
-                                    key={index}
+                                    key={message.client_id}
                                     user={user}
                                     message={message}
                                     loading={loading && index === messages.length - 1}
