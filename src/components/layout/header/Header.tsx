@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import LogoutBtn from '@/components/Ui/LogoutBtn/LogoutBtn';
 import ToggleButton from '@/components/Ui/Sidebar-Toggle/ToggleButton';
+import ThemeToggle from '@/components/Ui/ThemeToggle/ThemeToggle';
 import Logo from '../../../../public/images/logo.png';
 import DefaultAvatar from '../../../../public/images/default1.webp';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
@@ -29,6 +30,8 @@ const Header = async () => {
             </div>
 
             <div className='right-section'>
+                <ThemeToggle />
+
                 {!user && <TryButton />}
 
                 {user ? (

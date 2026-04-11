@@ -1,11 +1,11 @@
 'use client';
-import { useState, useEffect, useRef, MouseEvent, ChangeEvent } from 'react';
+import { useState, useEffect, useRef, MouseEvent } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import useAppStore from '@/store/store';
-import { useTheme } from 'next-themes';
 import Chats from '@/components/layout/sidebar/chats/Chats';
 import ToggleButton from '@/components/Ui/Sidebar-Toggle/ToggleButton';
+import ThemeToggle from '@/components/Ui/ThemeToggle/ThemeToggle';
 import Menu from '@/components/menu/Menu';
 import { Oval } from 'react-loader-spinner';
 import { toast } from 'sonner';
@@ -34,7 +34,6 @@ const Sidebar = () => {
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
     const [chatsLoading, setChatsLoading] = useState<boolean>(true);
 
-    const { theme, setTheme } = useTheme();
     const { getRequest } = useRequest();
 
     const settingsRef = useRef<HTMLButtonElement>(null);
@@ -98,16 +97,7 @@ const Sidebar = () => {
     const menuItems: IMenuItem[] = [
         {
             icon: <MdDarkMode />,
-            content: (
-                <div>
-                    <span>Dark Mode</span>
-                    <input
-                        type="checkbox"
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => setTheme(e.target.checked ? 'dark' : 'light')}
-                        checked={theme === 'dark'}
-                    />
-                </div>
-            ),
+            content: <ThemeToggle variant="switch" />,
         },
     ];
 
