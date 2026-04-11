@@ -1,6 +1,12 @@
 import { GenerateContentConfig, GoogleGenAI, HarmBlockThreshold, HarmCategory, ApiError, Content } from '@google/genai';
+import { GEMINI_ERROR_MESSAGES, FALLBACK_ERRORS, VALIDATION_ERRORS } from '../types/gemini';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const MODEL_PRIORITY_LIST = (process.env.GEMINI_MODELS || 'gemini-2.5-flash')
+    .split('|')
+    .map((model) => model.trim())
+    .filter(Boolean);
 
 const config: GenerateContentConfig = {
     temperature: 1,
@@ -8,54 +14,66 @@ const config: GenerateContentConfig = {
     topK: 64,
     maxOutputTokens: 2048,
     safetySettings: [
-        {
-            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-            threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-        },
-        {
-            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-        },
-        {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-        },
-        {
-            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-        },
-    ],
+        HarmCategory.HARM_CATEGORY_HARASSMENT,
+        HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    ].map((category) => ({
+        category,
+        threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    })),
 };
 
-const MODEL = 'gemini-3.1-flash-lite-preview';
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const withRetry = async <T>(operation: () => Promise<T>, retries = 3): Promise<T> => {
-    for (let i = 0; i < retries; i++) {
-        try {
-            return await operation();
-        } catch (error: unknown) {
-            if (error instanceof ApiError) {
-                const is503Error = error?.message?.includes('503') || error?.status === 503;
+const getFriendlyErrorMessage = (err: unknown): string => {
+    if (err instanceof ApiError) return GEMINI_ERROR_MESSAGES[err.status] || FALLBACK_ERRORS.API_UNKNOWN;
+    if (err instanceof Error) return FALLBACK_ERRORS.NETWORK;
+    return FALLBACK_ERRORS.GENERAL;
+};
 
-                if (is503Error && i < retries - 1) {
-                    const waitTime = (i + 1) * 1500;
-                    await new Promise((resolve) => setTimeout(resolve, waitTime));
+const executeWithFailover = async <T>(operation: (modelId: string) => Promise<T>, retries = 2): Promise<T> => {
+    let lastError: unknown = null;
+
+    for (const currentModelId of MODEL_PRIORITY_LIST) {
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try {
+                return await operation(currentModelId);
+            } catch (err: unknown) {
+                lastError = err;
+
+                if (!(err instanceof ApiError)) {
+                    console.error(`[${currentModelId}] Network/System Error:`, (err as Error).message);
+                    break;
+                }
+
+                const { status, message, cause } = err;
+                console.error(`[${currentModelId}] API Error (${status}): ${message}`, { cause });
+
+                if (status === 503 && attempt < retries - 1) {
+                    const waitTime = (attempt + 1) * 1500;
+                    console.warn(`[${currentModelId}] Busy (503). Retrying in ${waitTime}ms...`);
+                    await delay(waitTime);
                     continue;
                 }
 
-                throw new Error(error instanceof Error ? error.message : 'Gemini API request failed');
-            }
+                if (status === 404 || status === 429) {
+                    console.warn(`[${currentModelId}] Status ${status}. Jumping to next tier...`);
+                    break;
+                }
 
-            throw error;
+                break;
+            }
         }
     }
-    throw new Error('Failed to reach Gemini API after multiple attempts.');
+
+    throw new Error(getFriendlyErrorMessage(lastError));
 };
 
 const multiTurnConversation = async (prompt: string, history: Content[] = []): Promise<string> => {
-    return withRetry(async () => {
+    return executeWithFailover(async (model) => {
         const response = await ai.models.generateContent({
-            model: MODEL,
+            model,
             contents: [...history, { role: 'user', parts: [{ text: prompt }] }],
             config,
         });
@@ -64,12 +82,13 @@ const multiTurnConversation = async (prompt: string, history: Content[] = []): P
 };
 
 const generateTextFromImageAndPrompt = async (prompt: string, image: File | Blob): Promise<string> => {
-    if (!image) throw new Error('No image provided');
+    if (!image) throw new Error(VALIDATION_ERRORS.MISSING_IMAGE);
+
     const base64Data = Buffer.from(await image.arrayBuffer()).toString('base64');
 
-    return withRetry(async () => {
+    return executeWithFailover(async (model) => {
         const response = await ai.models.generateContent({
-            model: MODEL,
+            model,
             contents: [
                 {
                     role: 'user',
