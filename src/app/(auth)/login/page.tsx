@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import AuthForm from '@/components/forms/AuthForm';
-import { signIn } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import AuthProviderBtn from '@/components/Ui/AuthProviderBtn/AuthProviderBtn';
 import { FaLock, FaGithub, FaDiscord } from 'react-icons/fa';
 import { FiLogIn } from 'react-icons/fi';
@@ -13,6 +13,8 @@ import '../auth.css';
 
 const Page = () => {
     const [loading, setLoading] = useState(false);
+
+    const { signIn } = useAuth();
 
     const emailRef = useRef<HTMLInputElement>(null);
     const passwordRef = useRef<HTMLInputElement>(null);

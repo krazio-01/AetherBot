@@ -15,7 +15,7 @@ import { IoSettingsOutline } from 'react-icons/io5';
 import { IMenuItem } from '@/types';
 import { useRequest } from '@/hooks/useRequest';
 import { IChatResponse } from '@/types/chat';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import './sidebar.css';
 
 const Sidebar = () => {
@@ -28,7 +28,7 @@ const Sidebar = () => {
     const setMessages = useAppStore((state) => state.setMessages);
     const setInput = useAppStore((state) => state.setInput);
 
-    const { status } = useSession();
+    const { isGuest, isLoading } = useAuth();
 
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -63,9 +63,9 @@ const Sidebar = () => {
     };
 
     useEffect(() => {
-        if (status === 'loading') return;
+        if (isLoading) return;
 
-        if (status === 'unauthenticated') {
+        if (isGuest) {
             setChatsLoading(false);
             setChats([]);
             if (isNewChat) setIsNewChat(false);
@@ -88,7 +88,7 @@ const Sidebar = () => {
         };
 
         fetchChats();
-    }, [isNewChat, status]);
+    }, [isNewChat, isLoading, isGuest, getRequest]);
 
     const handleNewChatClick = () => {
         setMessages([]);

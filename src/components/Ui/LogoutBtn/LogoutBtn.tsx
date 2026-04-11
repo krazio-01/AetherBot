@@ -1,8 +1,10 @@
 'use client';
-import { signOut } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { MdLogout } from 'react-icons/md';
 
 const LogoutBtn = () => {
+    const { signOut } = useAuth();
+
     return (
         <div>
             <button onClick={() => signOut()}>

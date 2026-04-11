@@ -6,7 +6,7 @@ import useAppStore from '@/store/store';
 import Message from '@/components/layout/main/message/Message';
 import { Oval } from 'react-loader-spinner';
 import { toast } from 'sonner';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { useRequest } from '@/hooks/useRequest';
 import { IFetchMessagesResponse } from '@/types/chat';
 
@@ -26,8 +26,7 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
-    const { data: session } = useSession();
-    const user = session?.user;
+    const { user } = useAuth();
 
     useEffect(() => {
         if (!chatId) return;

@@ -2,7 +2,7 @@
 import React, { ChangeEvent } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { Oval } from 'react-loader-spinner';
 import { LuImagePlus } from 'react-icons/lu';
 import { IoMdSend } from 'react-icons/io';
@@ -43,13 +43,11 @@ const ImageAttachmentPreview = ({ uploadState, onCancel }: { uploadState: IUploa
 };
 
 const Footer = () => {
-    const { status } = useSession();
+    const { isAuthenticated } = useAuth();
     const params = useParams();
     const chatId = params?.chatId as string | undefined;
 
-    const { uploadState, handleImageChange, handleCancelImage, resetUploadState } = useImageUpload(
-        status === 'unauthenticated',
-    );
+    const { uploadState, handleImageChange, handleCancelImage, resetUploadState } = useImageUpload(isAuthenticated);
     const { textareaRef, adjustTextareaHeight, handleSubmit, handleKeyDown, input, setInput, loading } = useChatSubmit(
         chatId,
         uploadState,
