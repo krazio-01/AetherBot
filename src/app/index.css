@@ -60,7 +60,7 @@
         flex-direction: column;
         align-items: center;
         position: relative;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-top: 1px solid color-mix(in srgb, var(--text-clr) 10%, transparent);
 
         .features-header {
             text-align: center;
@@ -93,8 +93,8 @@
             max-width: 1200px;
 
             .feature-card {
-                background: rgba(255, 255, 255, 0.03);
-                border: 1px solid rgba(255, 255, 255, 0.05);
+                background: color-mix(in srgb, var(--text-clr) 3%, transparent);
+                border: 1px solid color-mix(in srgb, var(--text-clr) 8%, transparent);
                 border-radius: var(--border-radius);
                 padding: 2rem;
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -119,13 +119,13 @@
                 p {
                     color: var(--light-text-clr);
                     line-height: 1.6;
-                    font-size: 0.95rem;
+                    font-size: var(--fz-sm);
                 }
 
                 &:hover {
                     transform: translateY(-3px);
-                    border-color: rgba(168, 85, 247, 0.3);
-                    background: rgba(255, 255, 255, 0.06);
+                    border-color: rgba(168, 85, 247, 0.4);
+                    background: color-mix(in srgb, var(--text-clr) 6%, transparent);
                 }
             }
         }
@@ -135,7 +135,7 @@
         padding: 6rem 5%;
         display: flex;
         justify-content: center;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-top: 1px solid color-mix(in srgb, var(--text-clr) 10%, transparent);
 
         .cta-container {
             width: 100%;
@@ -151,6 +151,7 @@
                 font-weight: 600;
                 letter-spacing: -0.02em;
                 margin-bottom: 1rem;
+                color: var(--text-clr);
             }
 
             p {
@@ -168,11 +169,11 @@
                 border-radius: var(--border-radius);
                 text-decoration: none;
                 transition: all 250ms ease;
-                box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+                box-shadow: 0 4px 15px color-mix(in srgb, var(--text-clr) 15%, transparent);
 
                 &:hover {
                     transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+                    box-shadow: 0 6px 20px color-mix(in srgb, var(--text-clr) 30%, transparent);
                     filter: brightness(1.1);
                 }
             }
@@ -181,7 +182,7 @@
 
     .home-footer {
         padding: 2.5rem 5%;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-top: 1px solid color-mix(in srgb, var(--text-clr) 10%, transparent);
 
         .footer-content {
             max-width: 1200px;

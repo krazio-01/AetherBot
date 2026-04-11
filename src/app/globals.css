@@ -24,6 +24,12 @@
     --menu-bg: hsl(0, 0%, 100%);
     --menu-boxshadow: 0 0 10px rgba(0, 0, 0, 0.2);
     --menu-border: 1px solid rgba(0, 0, 0, 0.1);
+    --bg-glass: rgba(255, 255, 255, 0.65);
+    --bg-glass-dim: rgba(0, 0, 0, 0.03);
+    --border-glass: rgba(0, 0, 0, 0.08);
+    --border-highlight: rgba(0, 0, 0, 0.05);
+    --fill-muted: rgba(0, 0, 0, 0.1);
+    --fill-strong: rgba(0, 0, 0, 0.2);
 }
 
 [data-theme='dark'] {
@@ -40,6 +46,12 @@
     --menu-bg: var(--components-bg);
     --menu-boxshadow: 0 0 10px rgba(0, 0, 0, 0.2);
     --menu-border: 1px solid rgba(255, 255, 255, 0.1);
+    --bg-glass: rgba(15, 15, 20, 0.65);
+    --bg-glass-dim: rgba(0, 0, 0, 0.2);
+    --border-glass: rgba(255, 255, 255, 0.08);
+    --border-highlight: rgba(255, 255, 255, 0.1);
+    --fill-muted: rgba(255, 255, 255, 0.1);
+    --fill-strong: rgba(255, 255, 255, 0.2);
 }
 
 * {
