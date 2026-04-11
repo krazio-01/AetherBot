@@ -18,3 +18,9 @@ export interface IPasswordChangeRequest {
     token: string;
     newPassword: string;
 }
+
+export enum AUTH_STATES {
+    UNAUTHENTICATED = "unauthenticated",
+    AUTHENTICATED = "authenticated",
+    LOADING = "loading"
+}
