@@ -11,7 +11,7 @@ import { Oval } from 'react-loader-spinner';
 import { toast } from 'sonner';
 import { MdDarkMode } from 'react-icons/md';
 import { FaPlus } from 'react-icons/fa6';
-import { IoSettingsOutline } from 'react-icons/io5';
+import { IoSettingsOutline, IoChatbubblesOutline } from 'react-icons/io5';
 import { IMenuItem } from '@/types';
 import { useRequest } from '@/hooks/useRequest';
 import { IChatResponse } from '@/types/chat';
@@ -123,7 +123,19 @@ const Sidebar = () => {
             </div>
 
             <div className="sidebar-content">
-                {!chatsLoading ? (
+                {isGuest ? (
+                    <div className="guest-prompt-container">
+                        <div className="guest-prompt-card">
+                            <p className="prompt-title">Sign in to start saving your chats</p>
+                            <p className="prompt-subtitle">
+                                Once you're signed in, you can access your recent chats here.
+                            </p>
+                            <Link href={'/login'} className="sidebar-signin-btn">
+                                Sign in
+                            </Link>
+                        </div>
+                    </div>
+                ) : !chatsLoading ? (
                     chats.length > 0 ? (
                         <>
                             <span>Chats</span>
@@ -141,7 +153,10 @@ const Sidebar = () => {
                             </div>
                         </>
                     ) : (
-                        <span className="no-chats">No chats</span>
+                        <div className="empty-history">
+                            <IoChatbubblesOutline className="empty-icon" />
+                            <span className="empty-title">No recent chats</span>
+                        </div>
                     )
                 ) : (
                     <div className="chats-loader">
