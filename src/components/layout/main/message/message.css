@@ -114,13 +114,13 @@
             padding: 0;
             background: transparent;
             border: none;
-            color: var(--light-text-clr, #9ca3af);
+            color: var(--light-text-clr);
             cursor: pointer;
             border-radius: 50%;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
             &:hover {
-                background-color: var(--bg-surface-muted, rgba(255, 255, 255, 0.08));
+                background-color: var(--border-glass);
                 color: var(--text-clr);
             }
 
