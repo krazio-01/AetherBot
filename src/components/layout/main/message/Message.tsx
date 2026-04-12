@@ -1,11 +1,11 @@
 import React, { memo, useCallback } from 'react';
 import Image, { StaticImageData } from 'next/image';
 import Markdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import clipboardCopy from 'clipboard-copy';
 import { ThreeDots } from 'react-loader-spinner';
 import { toast } from 'sonner';
-import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { FaRegCopy } from 'react-icons/fa6';
 import { MdErrorOutline } from 'react-icons/md';
 import LogoImage from '../../../../../public/images/logo.png';

@@ -30,7 +30,7 @@
     flex-direction: row-reverse;
 
     .message-content {
-        background-color: var(--bg-surface-muted, rgba(255, 255, 255, 0.05));
+        background-color: var(--border-glass);
         padding: 1rem 1.5rem;
         border-radius: 1.5rem;
         border-top-right-radius: 0.25rem;
@@ -105,14 +105,18 @@
     border-radius: var(--border-radius);
     overflow: hidden;
 
-    ::-webkit-scrollbar-thumb {
-        background-color: var(--scrollbar-thumb-clr, var(--blue));
-        width: 2px;
-        height: 2px;
+    *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
     }
 
-    ::-webkit-scrollbar {
-        width: 2px;
+    *::-webkit-scrollbar-track {
+        background: transparent;
+        margin-inline: 0.5rem;
+    }
+
+    *::-webkit-scrollbar-thumb {
+        background-color: var(--scrollbar-thumb-clr, var(--blue));
         border-radius: 10px;
     }
 
