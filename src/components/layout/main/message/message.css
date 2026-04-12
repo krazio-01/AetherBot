@@ -97,6 +97,42 @@
             text-decoration: underline;
         }
     }
+
+    .message-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+        margin-left: -0.4rem;
+
+        button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            background: transparent;
+            border: none;
+            color: var(--light-text-clr, #9ca3af);
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+            &:hover {
+                background-color: var(--bg-surface-muted, rgba(255, 255, 255, 0.08));
+                color: var(--text-clr);
+            }
+
+            &:active {
+                transform: scale(0.9);
+            }
+
+            svg {
+                font-size: 1rem;
+            }
+        }
+    }
 }
 
 .code-block {

@@ -1,12 +1,12 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import Image, { StaticImageData } from 'next/image';
-import Markdown from 'react-markdown';
+import Markdown, { Components } from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import clipboardCopy from 'clipboard-copy';
 import { ThreeDots } from 'react-loader-spinner';
 import { toast } from 'sonner';
-import { FaRegCopy } from 'react-icons/fa6';
+import { LuCopy, LuVolume2, LuDownload } from 'react-icons/lu';
 import { MdErrorOutline } from 'react-icons/md';
 import LogoImage from '../../../../../public/images/logo.png';
 import FallbackImg from '../../../../../public/images/default.webp';
@@ -31,11 +31,66 @@ interface ILoadingComponentProps {
     message: IMessage;
 }
 
+const cleanTextForSpeech = (text: string): string => {
+    return text
+        .replace(/```[\s\S]*?```/g, ' [Code block omitted] ')
+        .replace(/[*_~`]/g, '')
+        .replace(/#/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .trim();
+};
+
 const Message = ({ user, message, loading }: IMessageProps) => {
+    const fullText = useMemo(() => {
+        return message?.parts?.map((p) => p.text).join('\n') || '';
+    }, [message?.parts]);
+
     const handleCopyClick = useCallback((content: string) => {
         clipboardCopy(content);
         toast('Code copied to clipboard!');
     }, []);
+
+    const handleCopyFullMessage = useCallback(() => {
+        clipboardCopy(fullText);
+        toast('Response copied to clipboard!');
+    }, [fullText]);
+
+    const handleReadAloud = useCallback(() => {
+        const cleanText = cleanTextForSpeech(fullText);
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+
+        const playSpeech = () => {
+            const voices = window.speechSynthesis.getVoices();
+            const bestVoice =
+                voices.find((v) => v.name.includes('Google US English')) ||
+                voices.find((v) => v.name.includes('Samantha')) ||
+                voices.find((v) => v.lang === 'en-US' && v.localService === false) ||
+                voices.find((v) => v.lang.startsWith('en')) ||
+                voices[0];
+
+            utterance.voice = bestVoice;
+            utterance.rate = 0.95;
+
+            (window as any).currentUtterance = utterance;
+            window.speechSynthesis.speak(utterance);
+        };
+
+        if (window.speechSynthesis.getVoices().length === 0)
+            window.speechSynthesis.addEventListener('voiceschanged', playSpeech, { once: true });
+        else playSpeech();
+    }, [fullText]);
+
+    const handleDownload = useCallback(() => {
+        const blob = new Blob([fullText], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'aetherbot-response.md';
+        a.click();
+        URL.revokeObjectURL(url);
+    }, [fullText]);
 
     if (loading) return <LoadingComponent user={user} message={message} />;
 
@@ -68,55 +123,69 @@ const Message = ({ user, message, loading }: IMessageProps) => {
                         ))}
                     </>
                 )}
+
+                {message.role === ChatRole.MODEL && (
+                    <div className="message-actions">
+                        <button onClick={handleCopyFullMessage} title="Copy response">
+                            <LuCopy />
+                        </button>
+                        <button onClick={handleReadAloud} title="Read aloud">
+                            <LuVolume2 />
+                        </button>
+                        <button onClick={handleDownload} title="Download response">
+                            <LuDownload />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
-const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, role }: IMarkDownBlockProps) {
-    return role === ChatRole.MODEL ? (
-        <Markdown
-            components={{
-                code({ node, inline, className, children, ...props }: any) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    const content = String(children).replace(/\n$/, '');
+const getMarkdownComponents = (handleCopyClick: (content: string) => void): Components => ({
+    code({ node, inline, className, children, ...props }: any) {
+        const match = /language-(\w+)/.exec(className || '');
+        const content = String(children).replace(/\n$/, '');
 
-                    return !inline && match ? (
-                        <div className="code-block">
-                            <div className="code-block-header">
-                                <div>
-                                    <span>{match[1]}</span>
-                                </div>
-                                <button className="copy-button" onClick={() => handleCopyClick(content)}>
-                                    <FaRegCopy />
-                                </button>
-                            </div>
-                            <SyntaxHighlighter
-                                style={atomOneDark}
-                                language={match[1]}
-                                PreTag="div"
-                                showLineNumbers
-                                lineNumberStyle={{
-                                    minWidth: '2rem',
-                                    paddingRight: '1rem',
-                                    userSelect: 'none',
-                                }}
-                                customStyle={{ padding: '1rem' }}
-                                {...props}
-                            >
-                                {content}
-                            </SyntaxHighlighter>
-                        </div>
-                    ) : (
-                        <code className={className} {...props}>
-                            {children}
-                        </code>
-                    );
-                },
-            }}
-        >
-            {part.text}
-        </Markdown>
+        return !inline && match ? (
+            <div className="code-block">
+                <div className="code-block-header">
+                    <div>
+                        <span>{match[1]}</span>
+                    </div>
+                    <button className="copy-button" onClick={() => handleCopyClick(content)}>
+                        <LuCopy />
+                    </button>
+                </div>
+                <SyntaxHighlighter
+                    style={atomOneDark}
+                    language={match[1]}
+                    PreTag="div"
+                    showLineNumbers
+                    lineNumberStyle={{
+                        minWidth: '2rem',
+                        paddingRight: '1rem',
+                        userSelect: 'none',
+                    }}
+                    customStyle={{ padding: '1rem' }}
+                    {...props}
+                >
+                    {content}
+                </SyntaxHighlighter>
+            </div>
+        ) : (
+            <code className={className} {...props}>
+                {children}
+            </code>
+        );
+    },
+});
+
+const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, role }: IMarkDownBlockProps) {
+    const markdownComponents = useMemo(() => getMarkdownComponents(handleCopyClick), [handleCopyClick]);
+
+    return role === ChatRole.MODEL ? (
+        <Markdown components={markdownComponents}>{part.text}</Markdown>
     ) : (
         <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             <p>{part.text}</p>
