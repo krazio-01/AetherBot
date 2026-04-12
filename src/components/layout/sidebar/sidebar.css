@@ -61,7 +61,6 @@
         margin-top: 1rem;
         transition: all 0.3s ease;
         overflow: hidden;
-
         opacity: 0;
         pointer-events: none;
 
@@ -112,7 +111,7 @@
             flex-direction: column;
 
             .guest-prompt-card {
-                background-color: var(--secondary-bg, #1e1e1e);
+                background-color: var(--bg-glass-dim);
                 border-radius: 12px;
                 padding: 1.25rem;
                 display: flex;
@@ -120,29 +119,26 @@
                 gap: 0.75rem;
 
                 .prompt-title {
-                    color: var(--text-primary, #e3e3e3);
-                    font-size: 0.9rem;
+                    color: var(--text-primary);
+                    font-size: var(--fz-sm);
                     font-weight: 500;
                     line-height: 1.4;
-                    margin: 0;
                 }
 
                 .prompt-subtitle {
-                    color: var(--text-secondary, #b4b4b4);
-                    font-size: 0.8rem;
+                    color: var(--text-secondary);
+                    font-size: var(--fz-sm);
                     line-height: 1.5;
-                    margin: 0;
                 }
 
                 .sidebar-signin-btn {
-                    color: #8ab4f8;
+                    color: var(--blue);
                     background: none;
                     border: none;
-                    font-size: 0.85rem;
+                    font-size: var(--fz-sm);
                     font-weight: 500;
                     cursor: pointer;
                     text-align: left;
-                    padding: 0;
                     width: fit-content;
 
                     &:hover {
