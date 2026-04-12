@@ -12,7 +12,6 @@ const config: GenerateContentConfig = {
     temperature: 1,
     topP: 0.95,
     topK: 64,
-    maxOutputTokens: 2048,
     safetySettings: [
         HarmCategory.HARM_CATEGORY_HARASSMENT,
         HarmCategory.HARM_CATEGORY_HATE_SPEECH,
