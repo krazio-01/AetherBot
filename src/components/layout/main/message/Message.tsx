@@ -118,7 +118,7 @@ const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, r
             {part.text}
         </Markdown>
     ) : (
-        <div>
+        <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             <p>{part.text}</p>
         </div>
     );
