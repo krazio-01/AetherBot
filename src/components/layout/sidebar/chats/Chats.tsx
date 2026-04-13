@@ -19,6 +19,7 @@ interface IChatsProps {
 
 const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
     const dotsRef = useRef<HTMLDivElement>(null);
@@ -48,8 +49,8 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
         }
     };
 
-    const handleDelete = () => {
-        setIsMenuOpen(false);
+    const handleConfirmDelete = () => {
+        setIsModalOpen(false);
 
         toast.promise(
             deleteChat().then((message) => {
@@ -69,7 +70,10 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
         {
             icon: <MdDelete />,
             content: <button>Delete</button>,
-            onClick: handleDelete,
+            onClick: () => {
+                setIsMenuOpen(false);
+                setIsModalOpen(true);
+            },
         },
         {
             icon: <FaRegShareFromSquare />,
@@ -88,7 +92,28 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
                     <BsThreeDotsVertical />
                 </div>
             </Link>
+
             {isMenuOpen && <Menu position={menuPosition} onClose={() => setIsMenuOpen(false)} items={menuItems} />}
+
+            {isModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>Delete Chat?</h3>
+                        <p>
+                            Are you sure you want to delete <strong>"{chat.title}"</strong>? This action cannot be
+                            undone.
+                        </p>
+                        <div className="modal-actions">
+                            <button className="cancel-btn" onClick={() => setIsModalOpen(false)}>
+                                Cancel
+                            </button>
+                            <button className="confirm-delete-btn" onClick={handleConfirmDelete}>
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </li>
     );
 };
