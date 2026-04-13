@@ -51,11 +51,14 @@
             position: absolute;
             top: 50%;
             right: 0.5rem;
+            background: transparent;
+            border: none;
             transform: translateY(-50%);
             opacity: 0;
             visibility: hidden;
             transition: all 0.15s ease;
             font-size: var(--fz-md);
+            cursor: pointer;
 
             &:hover {
                 opacity: 1;

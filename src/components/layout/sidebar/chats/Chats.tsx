@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, MouseEvent } from 'react';
+import React, { useState, useRef, MouseEvent, useMemo, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Menu from '@/components/menu/Menu';
@@ -22,11 +22,11 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
-    const dotsRef = useRef<HTMLDivElement>(null);
+    const dotsRef = useRef<HTMLButtonElement>(null);
     const router = useRouter();
     const { deleteRequest } = useRequest();
 
-    const toggleMenu = (e: MouseEvent<HTMLDivElement>) => {
+    const toggleMenu = useCallback((e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -35,51 +35,49 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
         const rect = dotsRef.current.getBoundingClientRect();
         setMenuPosition({ top: rect.bottom, left: rect.right });
         setIsMenuOpen((prev) => !prev);
-    };
+    }, []);
 
-    const deleteChat = async (): Promise<string> => {
-        try {
-            const res = await deleteRequest<void>(`/chats/${chat.referenceId}`);
-
-            if (res.success) return res.message || 'Chat deleted successfully';
-
-            throw new Error('Failed to delete chat');
-        } catch (error: any) {
-            throw typeof error === 'string' ? error : 'An unexpected error occurred';
-        }
-    };
-
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = useCallback(() => {
         setIsModalOpen(false);
 
-        toast.promise(
-            deleteChat().then((message) => {
+        const performDelete = async (): Promise<string> => {
+            try {
+                const res = await deleteRequest<void>(`/chats/${chat.referenceId}`);
+                if (res.success) return res.message || 'Chat deleted successfully';
+                throw new Error('Failed to delete chat');
+            } catch (error: any) {
+                throw typeof error === 'string' ? error : 'An unexpected error occurred';
+            }
+        };
+
+        toast.promise(performDelete(), {
+            loading: 'Deleting...',
+            success: (message) => {
                 removeChat(chat.referenceId);
                 if (isActive) router.push('/chat');
                 return message;
-            }),
-            {
-                loading: 'Deleting...',
-                success: (message) => message,
-                error: (message) => message,
             },
-        );
-    };
+            error: (err) => err,
+        });
+    }, [chat.referenceId, deleteRequest, isActive, removeChat, router]);
 
-    const menuItems: IMenuItem[] = [
-        {
-            icon: <MdDelete />,
-            content: <button>Delete</button>,
-            onClick: () => {
-                setIsMenuOpen(false);
-                setIsModalOpen(true);
+    const menuItems: IMenuItem[] = useMemo(
+        () => [
+            {
+                icon: <MdDelete />,
+                content: <button type="button">Delete</button>,
+                onClick: () => {
+                    setIsMenuOpen(false);
+                    setIsModalOpen(true);
+                },
             },
-        },
-        {
-            icon: <FaRegShareFromSquare />,
-            content: <button>Share</button>,
-        },
-    ];
+            {
+                icon: <FaRegShareFromSquare />,
+                content: <button type="button">Share</button>,
+            },
+        ],
+        [],
+    );
 
     return (
         <li className={`history-item ${isMenuOpen ? 'menu-open' : ''}`}>
@@ -88,26 +86,40 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
                     <MdChatBubbleOutline />
                     <span>{chat.title}</span>
                 </div>
-                <div id="three-dots" onClick={toggleMenu} ref={dotsRef}>
+
+                <button
+                    type="button"
+                    id='three-dots'
+                    onClick={toggleMenu}
+                    ref={dotsRef}
+                    aria-label="Chat options"
+                    aria-expanded={isMenuOpen}
+                >
                     <BsThreeDotsVertical />
-                </div>
+                </button>
             </Link>
 
             {isMenuOpen && <Menu position={menuPosition} onClose={() => setIsMenuOpen(false)} items={menuItems} />}
 
             {isModalOpen && (
-                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                <div
+                    className="modal-overlay"
+                    onClick={() => setIsModalOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="modal-title"
+                >
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h3>Delete Chat?</h3>
+                        <h3 id="modal-title">Delete Chat?</h3>
                         <p>
-                            Are you sure you want to delete <strong>"{chat.title}"</strong>? This action cannot be
-                            undone.
+                            Are you sure you want to delete <strong>&quot;{chat.title}&quot;</strong>? This action
+                            cannot be undone.
                         </p>
                         <div className="modal-actions">
-                            <button className="cancel-btn" onClick={() => setIsModalOpen(false)}>
+                            <button type="button" className="cancel-btn" onClick={() => setIsModalOpen(false)}>
                                 Cancel
                             </button>
-                            <button className="confirm-delete-btn" onClick={handleConfirmDelete}>
+                            <button type="button" className="confirm-delete-btn" onClick={handleConfirmDelete}>
                                 Delete
                             </button>
                         </div>
@@ -118,4 +130,4 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
     );
 };
 
-export default Chats;
+export default memo(Chats);
