@@ -6,6 +6,9 @@ import { toast } from 'sonner';
 import { LuVolume2, LuSquare } from 'react-icons/lu';
 import { ITTsResponse } from '@/types/chat';
 
+const audioCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 10;
+
 interface IPlayAudioButtonProps {
     text: string;
 }
@@ -49,9 +52,7 @@ const PlayAudioButton = ({ text }: IPlayAudioButtonProps) => {
 
             utterance.onerror = (e) => {
                 setIsPlaying(false);
-                if (e.error !== 'canceled' && e.error !== 'interrupted') {
-                    toast.error('Failed to play native audio.');
-                }
+                if (e.error !== 'canceled' && e.error !== 'interrupted') toast.error('Failed to play native audio.');
             };
 
             (window as any).currentUtterance = utterance;
@@ -85,11 +86,23 @@ const PlayAudioButton = ({ text }: IPlayAudioButtonProps) => {
         setIsLoading(true);
 
         try {
-            const res = await postRequest<ITTsResponse>('/tts', { text });
+            let base64Audio = audioCache.get(text);
 
-            if (!res.success || !res.data?.audio) throw new Error('API TTS Failed');
+            if (!base64Audio) {
+                const res = await postRequest<ITTsResponse>('/tts', { text });
 
-            const audio = new Audio(`data:audio/wav;base64,${res.data.audio}`);
+                if (!res.success || !res.data?.audio) throw new Error('API TTS Failed');
+
+                base64Audio = res.data.audio;
+
+                if (audioCache.size >= MAX_CACHE_SIZE) {
+                    const oldestKey = audioCache.keys().next().value;
+                    if (oldestKey) audioCache.delete(oldestKey);
+                }
+                audioCache.set(text, base64Audio);
+            }
+
+            const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
 
             audioRef.current = audio;
 
