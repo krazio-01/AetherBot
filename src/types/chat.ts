@@ -21,3 +21,7 @@ export interface ICreateChatResponse {
 export interface IChatResponse {
     chats: IChat[];
 }
+
+export interface ITTsResponse {
+    audio: string;
+}
