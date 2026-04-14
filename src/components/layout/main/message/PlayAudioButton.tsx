@@ -1,9 +1,9 @@
 'use client';
-import React, { useState, useCallback, useEffect, memo } from 'react';
+import React, { useState, useCallback, useEffect, memo, useRef } from 'react';
 import { useRequest } from '@/hooks/useRequest';
 import { Oval } from 'react-loader-spinner';
 import { toast } from 'sonner';
-import { LuVolume2 } from 'react-icons/lu';
+import { LuVolume2, LuSquare } from 'react-icons/lu';
 import { ITTsResponse } from '@/types/chat';
 
 interface IPlayAudioButtonProps {
@@ -14,11 +14,17 @@ const PlayAudioButton = ({ text }: IPlayAudioButtonProps) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
     const { postRequest } = useRequest();
 
     useEffect(() => {
         return () => {
             if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+            }
         };
     }, []);
 
@@ -40,16 +46,22 @@ const PlayAudioButton = ({ text }: IPlayAudioButtonProps) => {
 
             utterance.onstart = () => setIsPlaying(true);
             utterance.onend = () => setIsPlaying(false);
-            utterance.onerror = () => {
+
+            utterance.onerror = (e) => {
                 setIsPlaying(false);
-                toast.error('Failed to play native audio.');
+                if (e.error !== 'canceled' && e.error !== 'interrupted') {
+                    toast.error('Failed to play native audio.');
+                }
             };
 
             (window as any).currentUtterance = utterance;
+
+            setIsPlaying(true);
             window.speechSynthesis.speak(utterance);
         };
 
         if (window.speechSynthesis.getVoices().length === 0) {
+            setIsPlaying(true);
             window.speechSynthesis.addEventListener('voiceschanged', playSpeech, { once: true });
         } else {
             playSpeech();
@@ -59,6 +71,12 @@ const PlayAudioButton = ({ text }: IPlayAudioButtonProps) => {
     const handlePlay = useCallback(async () => {
         if (isPlaying) {
             window.speechSynthesis.cancel();
+
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+            }
+
             setIsPlaying(false);
             return;
         }
@@ -72,6 +90,8 @@ const PlayAudioButton = ({ text }: IPlayAudioButtonProps) => {
             if (!res.success || !res.data?.audio) throw new Error('API TTS Failed');
 
             const audio = new Audio(`data:audio/wav;base64,${res.data.audio}`);
+
+            audioRef.current = audio;
 
             audio.onplay = () => setIsPlaying(true);
             audio.onended = () => setIsPlaying(false);
@@ -99,8 +119,10 @@ const PlayAudioButton = ({ text }: IPlayAudioButtonProps) => {
         >
             {isLoading ? (
                 <Oval visible={true} height="14" width="14" color="currentColor" secondaryColor="currentColor" />
+            ) : isPlaying ? (
+                <LuSquare style={{ color: 'var(--blue)' }} />
             ) : (
-                <LuVolume2 style={{ color: isPlaying ? 'var(--blue)' : 'inherit' }} />
+                <LuVolume2 style={{ color: 'inherit' }} />
             )}
         </button>
     );
