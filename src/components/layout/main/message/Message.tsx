@@ -6,12 +6,13 @@ import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import clipboardCopy from 'clipboard-copy';
 import { ThreeDots } from 'react-loader-spinner';
 import { toast } from 'sonner';
-import { LuCopy, LuVolume2, LuDownload } from 'react-icons/lu';
+import { LuCopy, LuDownload } from 'react-icons/lu';
 import { MdErrorOutline } from 'react-icons/md';
 import LogoImage from '../../../../../public/images/logo.png';
 import FallbackImg from '../../../../../public/images/default.webp';
 import { ISessionUser, IMessage } from '@/types';
 import { ChatRole } from '@/types/chat';
+import PlayAudioButton from './PlayAudioButton';
 import './message.css';
 
 interface IMessageProps {
@@ -53,33 +54,6 @@ const Message = ({ user, message, loading }: IMessageProps) => {
     const handleCopyFullMessage = useCallback(() => {
         clipboardCopy(fullText);
         toast('Response copied to clipboard!');
-    }, [fullText]);
-
-    const handleReadAloud = useCallback(() => {
-        const cleanText = cleanTextForSpeech(fullText);
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-
-        const playSpeech = () => {
-            const voices = window.speechSynthesis.getVoices();
-            const bestVoice =
-                voices.find((v) => v.name.includes('Google US English')) ||
-                voices.find((v) => v.name.includes('Samantha')) ||
-                voices.find((v) => v.lang === 'en-US' && v.localService === false) ||
-                voices.find((v) => v.lang.startsWith('en')) ||
-                voices[0];
-
-            utterance.voice = bestVoice;
-            utterance.rate = 0.95;
-
-            (window as any).currentUtterance = utterance;
-            window.speechSynthesis.speak(utterance);
-        };
-
-        if (window.speechSynthesis.getVoices().length === 0)
-            window.speechSynthesis.addEventListener('voiceschanged', playSpeech, { once: true });
-        else playSpeech();
     }, [fullText]);
 
     const handleDownload = useCallback(() => {
@@ -129,9 +103,9 @@ const Message = ({ user, message, loading }: IMessageProps) => {
                         <button onClick={handleCopyFullMessage} title="Copy response">
                             <LuCopy />
                         </button>
-                        <button onClick={handleReadAloud} title="Read aloud">
-                            <LuVolume2 />
-                        </button>
+
+                        <PlayAudioButton text={cleanTextForSpeech(fullText)} />
+
                         <button onClick={handleDownload} title="Download response">
                             <LuDownload />
                         </button>
