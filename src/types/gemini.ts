@@ -17,3 +17,11 @@ export enum FALLBACK_ERRORS {
     API_UNKNOWN = 'An unexpected AI error occurred. Please try again.',
     GENERAL = "I'm having trouble connecting right now. Please try again in a moment.",
 };
+
+export enum GeminiVoice {
+    PUCK = 'Puck',
+    CHARON = 'Charon',
+    KORE = 'Kore',
+    FENRIR = 'Fenrir',
+    AOEDE = 'Aoede',
+}

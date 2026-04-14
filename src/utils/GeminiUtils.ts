@@ -1,9 +1,14 @@
 import { GenerateContentConfig, GoogleGenAI, HarmBlockThreshold, HarmCategory, ApiError, Content } from '@google/genai';
-import { GEMINI_ERROR_MESSAGES, FALLBACK_ERRORS, VALIDATION_ERRORS } from '../types/gemini';
+import { GEMINI_ERROR_MESSAGES, FALLBACK_ERRORS, VALIDATION_ERRORS, GeminiVoice } from '../types/gemini';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const MODEL_PRIORITY_LIST = (process.env.GEMINI_MODELS || 'gemini-2.5-flash')
+    .split('|')
+    .map((model) => model.trim())
+    .filter(Boolean);
+
+const TTS_MODEL_PRIORITY_LIST = (process.env.GEMINI_TTS_MODELS || 'gemini-2.5-flash-tts')
     .split('|')
     .map((model) => model.trim())
     .filter(Boolean);
@@ -31,10 +36,42 @@ const getFriendlyErrorMessage = (err: unknown): string => {
     return FALLBACK_ERRORS.GENERAL;
 };
 
-const executeWithFailover = async <T>(operation: (modelId: string) => Promise<T>, retries = 2): Promise<T> => {
+const addWavHeader = (
+    pcmData: Buffer,
+    sampleRate: number = 24000,
+    numChannels: number = 1,
+    bitsPerSample: number = 16,
+): Buffer => {
+    const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;
+    const blockAlign = (numChannels * bitsPerSample) / 8;
+    const dataSize = pcmData.length;
+    const header = Buffer.alloc(44);
+
+    header.write('RIFF', 0);
+    header.writeUInt32LE(36 + dataSize, 4);
+    header.write('WAVE', 8);
+    header.write('fmt ', 12);
+    header.writeUInt32LE(16, 16);
+    header.writeUInt16LE(1, 20);
+    header.writeUInt16LE(numChannels, 22);
+    header.writeUInt32LE(sampleRate, 24);
+    header.writeUInt32LE(byteRate, 28);
+    header.writeUInt16LE(blockAlign, 32);
+    header.writeUInt16LE(bitsPerSample, 34);
+    header.write('data', 36);
+    header.writeUInt32LE(dataSize, 40);
+
+    return Buffer.concat([header, pcmData]);
+};
+
+const executeWithFailover = async <T>(
+    operation: (modelId: string) => Promise<T>,
+    modelList: string[] = MODEL_PRIORITY_LIST,
+    retries = 2,
+): Promise<T> => {
     let lastError: unknown = null;
 
-    for (const currentModelId of MODEL_PRIORITY_LIST) {
+    for (const currentModelId of modelList) {
         for (let attempt = 0; attempt < retries; attempt++) {
             try {
                 return await operation(currentModelId);
@@ -100,4 +137,35 @@ const generateTextFromImageAndPrompt = async (prompt: string, image: File | Blob
     });
 };
 
-export { multiTurnConversation, generateTextFromImageAndPrompt };
+const generateAudioFromText = async (
+    text: string,
+    voiceName: GeminiVoice = GeminiVoice.KORE,
+): Promise<string> => {
+    return executeWithFailover(async (model) => {
+        const response = await ai.models.generateContent({
+            model,
+            contents: text,
+            config: {
+                ...config,
+                responseModalities: ['AUDIO'],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: {
+                            voiceName,
+                        },
+                    },
+                },
+            },
+        });
+
+        const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+        if (!base64Audio) throw new Error('No audio data received from the model.');
+
+        const pcmBuffer = Buffer.from(base64Audio, 'base64');
+        const wavBuffer = addWavHeader(pcmBuffer);
+
+        return wavBuffer.toString('base64');
+    }, TTS_MODEL_PRIORITY_LIST);
+};
+export { multiTurnConversation, generateTextFromImageAndPrompt, generateAudioFromText };
