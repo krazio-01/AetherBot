@@ -33,18 +33,46 @@ const PlayAudioButton = ({ text }: IPlayAudioButtonProps) => {
 
     const playFallbackSpeech = useCallback((fallbackText: string) => {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(fallbackText);
 
         const playSpeech = () => {
             const voices = window.speechSynthesis.getVoices();
-            const bestVoice =
-                voices.find((v) => v.name.includes('Google US English')) ||
-                voices.find((v) => v.name.includes('Samantha')) ||
-                voices.find((v) => v.lang === 'en-US' && !v.localService) ||
-                voices.find((v) => v.lang.startsWith('en')) ||
-                voices[0];
 
-            utterance.voice = bestVoice || null;
+            const isEnglish = (v: SpeechSynthesisVoice) => v.lang.startsWith('en');
+
+            const isNotRobotic = (v: SpeechSynthesisVoice) => {
+                const lowerName = v.name.toLowerCase();
+                const lowerURI = v.voiceURI.toLowerCase();
+                return (
+                    !lowerName.includes('espeak') && !lowerURI.includes('speechd') && !lowerName.includes('festival')
+                );
+            };
+
+            const goodVoice =
+                voices.find((v) => v.name.includes('Natural') && isEnglish(v) && isNotRobotic(v)) ||
+                voices.find(
+                    (v) =>
+                        (v.name === 'Alex' || v.name.includes('Enhanced') || v.name.includes('Premium')) &&
+                        isEnglish(v) &&
+                        isNotRobotic(v),
+                ) ||
+                voices.find(
+                    (v) =>
+                        (v.name.includes('Samantha') || v.name.includes('Daniel')) && isEnglish(v) && isNotRobotic(v),
+                ) ||
+                voices.find((v) => v.name.includes('Google') && isEnglish(v) && isNotRobotic(v)) ||
+                voices.find((v) => v.name.includes('Microsoft') && isEnglish(v) && isNotRobotic(v));
+
+            if (!goodVoice) {
+                setIsPlaying(false);
+                toast.error(
+                    'Daily AI voice limit reached. Please use Chrome, Edge, Safari, or Windows for native audio support.',
+                    { duration: 7000 },
+                );
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(fallbackText);
+            utterance.voice = goodVoice;
             utterance.rate = 0.95;
 
             utterance.onstart = () => setIsPlaying(true);
