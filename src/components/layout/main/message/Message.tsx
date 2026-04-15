@@ -9,10 +9,10 @@ import { toast } from 'sonner';
 import { LuCopy, LuDownload } from 'react-icons/lu';
 import { MdErrorOutline } from 'react-icons/md';
 import LogoImage from '../../../../../public/images/logo.png';
-import FallbackImg from '../../../../../public/images/default.webp';
 import { ISessionUser, IMessage } from '@/types';
 import { ChatRole } from '@/types/chat';
 import PlayAudioButton from './PlayAudioButton';
+import UserAvatar from '@/components/Ui/UserAvatar/UserAvatar';
 import './message.css';
 
 interface IMessageProps {
@@ -70,12 +70,17 @@ const Message = ({ user, message, loading }: IMessageProps) => {
 
     return (
         <div className={`message-${message.role}`}>
-            <Image
-                src={message.role === ChatRole.USER ? user?.avatar || FallbackImg : (LogoImage as StaticImageData)}
-                alt={message.role}
-                width={message.role === ChatRole.USER ? 30 : 45}
-                height={message.role === ChatRole.USER ? 30 : 45}
-            />
+            {message.role === ChatRole.USER ? (
+                <UserAvatar avatar={user?.avatar} size={30} />
+            ) : (
+                <Image
+                    src={LogoImage as StaticImageData}
+                    alt="Model Avatar"
+                    width={45}
+                    height={45}
+                    className="avatar-img"
+                />
+            )}
             <div className="message-content">
                 {message?.isError ? (
                     message.parts.map((part, index) => (
@@ -170,7 +175,7 @@ const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, r
 const LoadingComponent = ({ user, message }: ILoadingComponentProps) => (
     <>
         <div className="message-user">
-            <Image src={user?.avatar || FallbackImg} alt="User Avatar" width={30} height={30} />
+            <UserAvatar avatar={user?.avatar} size={30} />
             <div className="message-content">
                 {message?.image && <img src={message.image} alt="Loading image" />}
                 {message.parts.map((part, index) => (

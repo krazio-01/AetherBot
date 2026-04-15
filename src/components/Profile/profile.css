@@ -13,10 +13,7 @@
         }
 
         .profile-avatar {
-            width: 34px;
-            height: 34px;
             border-radius: 50%;
-            overflow: hidden;
             border: 2px solid transparent;
             transition: border-color 0.2s ease;
 
@@ -58,10 +55,11 @@
             border-bottom: 1px solid rgba(128, 128, 128, 0.15);
             margin-bottom: 0.25rem;
 
-            img {
+            /* img,
+            .avatar-fallback-profile {
                 border-radius: 50%;
                 flex-shrink: 0;
-            }
+            } */
 
             > div {
                 font-size: var(--fz-sm);
