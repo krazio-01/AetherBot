@@ -33,12 +33,36 @@ interface ILoadingComponentProps {
 }
 
 const cleanTextForSpeech = (text: string): string => {
-    return text
-        .replace(/```[\s\S]*?```/g, ' [Code block omitted] ')
-        .replace(/[*_~`]/g, '')
-        .replace(/#/g, '')
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-        .trim();
+    let clean = text;
+
+    clean = clean.replace(/```[\s\S]*?```/g, '. ');
+
+    clean = clean.replace(/`([^`]+)`/g, '$1');
+
+    clean = clean.replace(/!\[([^\]]*)\]\([^)]+\)/g, '');
+
+    clean = clean.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+
+    clean = clean.replace(/https?:\/\/[^\s]+/g, 'this link');
+
+    clean = clean.replace(/(\d+)-(\d+)/g, '$1 to $2');
+    clean = clean.replace(/%/g, ' percent');
+    clean = clean.replace(/°C/g, ' degrees Celsius');
+    clean = clean.replace(/°F/g, ' degrees Fahrenheit');
+    clean = clean.replace(/&/g, ' and ');
+    clean = clean.replace(/\+/g, ' plus ');
+    clean = clean.replace(/=/g, ' equals ');
+
+    clean = clean.replace(/[*_~#|>]/g, '');
+
+    clean = clean.replace(/[()]/g, ', ');
+    clean = clean.replace(/[{}[\]]/g, '');
+
+    clean = clean.replace(/,\s*,/g, ',');
+    clean = clean.replace(/,\s*\./g, '.');
+    clean = clean.replace(/\s{2,}/g, ' ');
+
+    return clean.trim();
 };
 
 const Message = ({ user, message, loading }: IMessageProps) => {
