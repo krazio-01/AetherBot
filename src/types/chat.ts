@@ -5,12 +5,17 @@ export enum ChatRole {
     MODEL = 'model',
 }
 
+export enum MediaType {
+    IMAGE = "image",
+    PDF = "pdf"
+}
+
 export interface IFetchMessagesResponse {
     messages: IMessage[];
 }
 
-export interface IUploadImageResponse {
-    imgUrl: string;
+export interface IUploadFileResponse {
+    url: string;
 }
 
 export interface ICreateChatResponse {

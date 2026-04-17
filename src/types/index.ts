@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { ChatRole } from "./chat";
+import { ChatRole, MediaType } from "./chat";
 
 // API_response
 export interface IResponseWrapper<T = any> {
@@ -39,7 +39,11 @@ export interface IMessage {
     client_id?: string;
     role: ChatRole;
     parts: IMessagePart[];
-    image?: string;
+    attachment?: {
+        url: string;
+        type: MediaType;
+        name: string;
+    };
     isError?: boolean;
 }
 

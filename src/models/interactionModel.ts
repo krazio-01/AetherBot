@@ -1,10 +1,15 @@
+import { MediaType } from '@/types/chat';
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IInteraction extends Document {
     chatId: string;
     userMessage: {
         text: string;
-        image?: string;
+        attachment?: {
+            url: string;
+            type: string;
+            name: string;
+        };
     };
     modelMessage: {
         text: string;
@@ -20,7 +25,11 @@ const interactionSchema = new Schema<IInteraction>(
         },
         userMessage: {
             text: { type: String, required: true },
-            image: { type: String },
+            attachment: {
+                url: { type: String },
+                type: { type: String, enum: [MediaType.IMAGE, MediaType.PDF] },
+                name: { type: String },
+            },
         },
         modelMessage: {
             text: { type: String, required: true },
