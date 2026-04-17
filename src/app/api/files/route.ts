@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
-import { imageService } from '@/services/imageService';
+import { fileService } from '@/services/fileService';
 
 export const POST = apiHandler(async (request: NextRequest) => {
     const formData = await request.formData();
@@ -9,18 +9,20 @@ export const POST = apiHandler(async (request: NextRequest) => {
 
     if (!file) throw new ErrorWrapper(400, 'No file provided');
 
-    const imgUrl = await imageService.uploadImage(file);
+    if (file.size > 10 * 1024 * 1024) throw new ErrorWrapper(400, 'File size exceeds 10MB limit');
 
-    return ResponseWrapper.successWithData({ imgUrl });
+    const fileUrl = await fileService.uploadFile(file);
+
+    return ResponseWrapper.successWithData({ url: fileUrl });
 });
 
 export const DELETE = apiHandler(async (request: NextRequest) => {
     const { searchParams } = request.nextUrl;
-    const imgUrl = searchParams.get('imgUrl');
+    const fileUrl = searchParams.get('url');
 
-    if (!imgUrl) throw new ErrorWrapper(400, 'Image URL is required');
+    if (!fileUrl) throw new ErrorWrapper(400, 'File URL is required for deletion');
 
-    await imageService.deleteImageByUrl(imgUrl);
+    await fileService.deleteFileByUrl(fileUrl);
 
-    return ResponseWrapper.success(200, 'Image deleted successfully');
+    return ResponseWrapper.success(200, 'File deleted successfully');
 });
