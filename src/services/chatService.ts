@@ -1,23 +1,27 @@
 import Chat from '@/models/chatModel';
 import Interaction from '@/models/interactionModel';
-import { multiTurnConversation, generateTextFromImageAndPrompt } from '@/utils/GeminiUtils';
-import cloudinary from '@/utils/cloudinaryConfig';
+import { multiTurnConversation, generateTextFromFileAndPrompt } from '@/utils/GeminiUtils';
+import { fileService } from '@/services/fileService';
 import { v4 as uuidv4 } from 'uuid';
 import { Content } from '@google/genai';
-import { ChatRole, ICreateChatResponse } from '@/types/chat';
+import { ChatRole, ICreateChatResponse, MediaType } from '@/types/chat';
 import { IChat } from '@/types';
 
 interface IProcessChatParams {
     userId?: string;
     prompt: string;
-    image?: File | null;
-    imageUrl?: string | null;
+    attachment?: {
+        url: string;
+        type: MediaType;
+        name: string;
+    };
+    rawFile?: File | null;
     referenceId?: string | null;
     historyRaw?: string | null;
 }
 
 export async function createChatInteraction(params: IProcessChatParams): Promise<ICreateChatResponse> {
-    const { userId, prompt, image, imageUrl, referenceId, historyRaw } = params;
+    const { userId, prompt, attachment, rawFile, referenceId, historyRaw } = params;
     let geminiHistory: Content[] = [];
     let chatDoc: any = null;
 
@@ -45,7 +49,8 @@ export async function createChatInteraction(params: IProcessChatParams): Promise
     }
 
     let geminiResponse: string;
-    if (image) geminiResponse = await generateTextFromImageAndPrompt(prompt, image);
+
+    if (rawFile) geminiResponse = await generateTextFromFileAndPrompt(prompt, rawFile);
     else geminiResponse = await multiTurnConversation(prompt, geminiHistory);
 
     if (!userId) {
@@ -60,7 +65,7 @@ export async function createChatInteraction(params: IProcessChatParams): Promise
 
     const conversationTurn = new Interaction({
         chatId: chatDoc.referenceId,
-        userMessage: { text: prompt, image: imageUrl || undefined },
+        userMessage: { text: prompt, attachment },
         modelMessage: { text: geminiResponse },
     });
 
@@ -86,24 +91,21 @@ export async function deleteUserChat(chatId: string, userId: string): Promise<vo
 
     if (!chat) throw new Error('Chat not found');
 
-    const interactionsWithImages = await Interaction.find({
+    const interactionsWithFiles = await Interaction.find({
         chatId: chatId,
-        'userMessage.image': { $exists: true, $ne: null },
+        'userMessage.attachment.url': { $exists: true },
     }).lean();
 
-    const imageUrls = interactionsWithImages.map((interaction: any) => interaction.userMessage.image);
+    const fileUrls = interactionsWithFiles.map((interaction: any) => interaction.userMessage.attachment.url);
 
-    const deleteImagePromises = imageUrls.map((imageUrl: string) => {
-        const id = imageUrl.split('/').pop()?.split('.')[0];
-        if (id) {
-            const publicId = `AetherBot/${id}`;
-            return cloudinary.uploader.destroy(publicId);
-        }
-        return Promise.resolve();
+    const deleteFilePromises = fileUrls.map((url: string) => {
+        return fileService.deleteFileByUrl(url).catch((err) => {
+            console.error(`Failed to delete file ${url} from Cloudinary:`, err);
+        });
     });
 
     await Promise.all([
-        ...deleteImagePromises,
+        ...deleteFilePromises,
         Chat.deleteOne({ referenceId: chatId }),
         Interaction.deleteMany({ chatId: chatId }),
     ]);

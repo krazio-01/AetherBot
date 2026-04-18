@@ -9,7 +9,7 @@ export const interactionService = {
 
         await connectToDB();
 
-        const interactions = await Interaction.find({ chatId }).sort({ createdAt: 1 });
+        const interactions = await Interaction.find({ chatId }).sort({ createdAt: 1 }).lean();
 
         if (!interactions || interactions.length === 0) throw new ErrorWrapper(404, `No chat exists for: ${chatId}`);
 
@@ -19,7 +19,7 @@ export const interactionService = {
                 parts: [{ text: interaction.userMessage.text }],
             };
 
-            if (interaction.userMessage.image) userMsg.image = interaction.userMessage.image;
+            if (interaction.userMessage.attachment) userMsg.attachment = interaction.userMessage.attachment;
 
             const modelMsg = {
                 role: ChatRole.MODEL,
