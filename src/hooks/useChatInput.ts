@@ -3,11 +3,16 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import useAppStore from '@/store/store';
 import { useRequest } from '@/hooks/useRequest';
-import { ChatRole, ICreateChatResponse } from '@/types/chat';
+import { ChatRole, ICreateChatResponse, MediaType } from '@/types/chat';
 import { IMessage } from '@/types';
-import { IUploadState } from './useImageUpload';
+import { IUploadState } from './useFileUpload';
 
-export const useChatSubmit = (chatId: string | undefined, uploadState: IUploadState, resetUploadState: () => void) => {
+export const useChatSubmit = (
+    chatId: string | undefined,
+    isAuthenticated: boolean,
+    uploadState: IUploadState,
+    resetUploadState: () => void,
+) => {
     const router = useRouter();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { postRequest } = useRequest();
@@ -23,13 +28,13 @@ export const useChatSubmit = (chatId: string | undefined, uploadState: IUploadSt
     const createChatMessage = (
         role: ChatRole,
         text: string,
-        imageUrl: string = '',
+        attachment?: { url: string; type: MediaType; name: string },
         isError: boolean = false,
     ): IMessage => ({
         client_id: crypto.randomUUID(),
         role,
         parts: [{ text }],
-        image: imageUrl,
+        attachment,
         isError,
     });
 
@@ -43,14 +48,24 @@ export const useChatSubmit = (chatId: string | undefined, uploadState: IUploadSt
             resetUploadState();
             adjustTextareaHeight(true);
 
-            const history = messages.map(({ image, isError, ...msg }: IMessage) => msg);
             const formData = new FormData();
-
-            if (uploadState.file) formData.append('file', uploadState.file);
             formData.append('referenceId', currentChatId || '');
             formData.append('prompt', input);
-            formData.append('history', JSON.stringify(history));
-            formData.append('imageUrl', uploadState.imageUrl || '');
+
+            if (!isAuthenticated) {
+                const history = messages.map(({ attachment, isError, ...msg }: IMessage) => msg);
+                formData.append('history', JSON.stringify(history));
+            }
+
+            if (uploadState.attachment) {
+                formData.append('file', uploadState.attachment.file);
+
+                if (uploadState.attachment.url.startsWith('http')) {
+                    formData.append('fileUrl', uploadState.attachment.url);
+                    formData.append('fileType', uploadState.attachment.type);
+                    formData.append('fileName', uploadState.attachment.name);
+                }
+            }
 
             const res = await postRequest<ICreateChatResponse, FormData>('/chats', formData);
 
@@ -61,7 +76,7 @@ export const useChatSubmit = (chatId: string | undefined, uploadState: IUploadSt
         } catch (error: any) {
             const errorMessage = typeof error === 'string' ? error : error?.message || 'An unexpected error occurred.';
             if (currentChatId) {
-                updateMessages(createChatMessage(ChatRole.MODEL, errorMessage, '', true));
+                updateMessages(createChatMessage(ChatRole.MODEL, errorMessage, undefined, true));
             } else {
                 useAppStore.setState({ messages: previousMessages });
             }
@@ -73,10 +88,10 @@ export const useChatSubmit = (chatId: string | undefined, uploadState: IUploadSt
 
     const handleSubmit = async (e?: FormEvent<HTMLFormElement> | KeyboardEvent<HTMLTextAreaElement>) => {
         if (e) e.preventDefault();
-        if (!input.trim() || uploadState.imageLoading || loading) return;
 
-        const imageToDisplay = uploadState.imageUrl || uploadState.previewUrl || '';
-        const newMessage = createChatMessage(ChatRole.USER, input, imageToDisplay);
+        if (!input.trim() || uploadState.loading || loading) return;
+
+        const newMessage = createChatMessage(ChatRole.USER, input, uploadState.attachment || undefined);
 
         if (!chatId) {
             toast.promise(
