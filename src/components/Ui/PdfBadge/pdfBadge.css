@@ -1,0 +1,56 @@
+.pdf-badge-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: var(--menu-bg);
+    border: var(--menu-border);
+    padding: 0.6rem 1rem;
+    border-radius: calc(var(--border-radius) * 1.5);
+    max-width: 250px;
+    min-width: 140px;
+    color: var(--text-clr) !important;
+    transition: opacity 0.2s ease;
+
+    &.loading,
+    &.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    .custom-pdf-icon {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    .file-outline {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        color: var(--red, #ff4a4a);
+        stroke-width: 1.5px;
+    }
+
+    .file-text {
+        font-size: 0.5rem;
+        font-weight: 800;
+        color: var(--text-clr);
+        margin-top: 4px;
+        letter-spacing: -0.6px;
+        z-index: 1;
+    }
+
+    .pdf-name {
+        font-size: var(--fz-sm);
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: inherit;
+    }
+}
