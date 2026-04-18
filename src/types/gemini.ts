@@ -8,8 +8,9 @@ export const GEMINI_ERROR_MESSAGES: { [key: number]: string } = {
     503: 'My servers are currently experiencing high demand. Please try again shortly.',
 };
 
-export enum VALIDATION_ERRORS {
-    MISSING_IMAGE = "No image was provided. Please attach an image to proceed.",
+export enum GENERAL_ERRORS {
+    MISSING_FILE = "No file was provided. Please attach a document or image to proceed.",
+    NO_AUDIO = "No audio data received from the model.",
 };
 
 export enum FALLBACK_ERRORS {

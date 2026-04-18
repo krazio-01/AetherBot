@@ -1,5 +1,5 @@
 import { GenerateContentConfig, GoogleGenAI, HarmBlockThreshold, HarmCategory, ApiError, Content } from '@google/genai';
-import { GEMINI_ERROR_MESSAGES, FALLBACK_ERRORS, VALIDATION_ERRORS, GeminiVoice } from '../types/gemini';
+import { GEMINI_ERROR_MESSAGES, FALLBACK_ERRORS, GENERAL_ERRORS, GeminiVoice } from '../types/gemini';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -117,10 +117,10 @@ const multiTurnConversation = async (prompt: string, history: Content[] = []): P
     });
 };
 
-const generateTextFromImageAndPrompt = async (prompt: string, image: File | Blob): Promise<string> => {
-    if (!image) throw new Error(VALIDATION_ERRORS.MISSING_IMAGE);
+const generateTextFromFileAndPrompt = async (prompt: string, file: File | Blob): Promise<string> => {
+    if (!file) throw new Error(GENERAL_ERRORS.MISSING_FILE);
 
-    const base64Data = Buffer.from(await image.arrayBuffer()).toString('base64');
+    const base64Data = Buffer.from(await file.arrayBuffer()).toString('base64');
 
     return executeWithFailover(async (model) => {
         const response = await ai.models.generateContent({
@@ -128,7 +128,7 @@ const generateTextFromImageAndPrompt = async (prompt: string, image: File | Blob
             contents: [
                 {
                     role: 'user',
-                    parts: [{ text: prompt }, { inlineData: { data: base64Data, mimeType: image.type } }],
+                    parts: [{ text: prompt }, { inlineData: { data: base64Data, mimeType: file.type } }],
                 },
             ],
             config,
@@ -137,10 +137,7 @@ const generateTextFromImageAndPrompt = async (prompt: string, image: File | Blob
     });
 };
 
-const generateAudioFromText = async (
-    text: string,
-    voiceName: GeminiVoice = GeminiVoice.KORE,
-): Promise<string> => {
+const generateAudioFromText = async (text: string, voiceName: GeminiVoice = GeminiVoice.KORE): Promise<string> => {
     return executeWithFailover(async (model) => {
         const response = await ai.models.generateContent({
             model,
@@ -160,7 +157,7 @@ const generateAudioFromText = async (
 
         const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
-        if (!base64Audio) throw new Error('No audio data received from the model.');
+        if (!base64Audio) throw new Error(GENERAL_ERRORS.NO_AUDIO);
 
         const pcmBuffer = Buffer.from(base64Audio, 'base64');
         const wavBuffer = addWavHeader(pcmBuffer);
@@ -168,4 +165,5 @@ const generateAudioFromText = async (
         return wavBuffer.toString('base64');
     }, TTS_MODEL_PRIORITY_LIST);
 };
-export { multiTurnConversation, generateTextFromImageAndPrompt, generateAudioFromText };
+
+export { multiTurnConversation, generateTextFromFileAndPrompt, generateAudioFromText };
