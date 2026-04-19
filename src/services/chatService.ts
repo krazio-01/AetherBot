@@ -62,6 +62,7 @@ export async function createChatInteraction(params: IProcessChatParams): Promise
     }
 
     if (!chatDoc) chatDoc = new Chat({ userId, referenceId: uuidv4(), title: prompt });
+    else chatDoc.updatedAt = new Date();
 
     const conversationTurn = new Interaction({
         chatId: chatDoc.referenceId,
@@ -78,12 +79,14 @@ export async function createChatInteraction(params: IProcessChatParams): Promise
 }
 
 export async function getUserChats(userId: string): Promise<IChat[]> {
-    const chats = await Chat.find({ userId }).select('-createdAt -userId -__v').sort({ createdAt: -1 }).lean();
+    const chats = await Chat.find({ userId }).select('-createdAt -userId -__v -updatedAt').sort({ updatedAt: -1 }).lean();
 
-    return chats.map((chat: any) => ({
-        ...chat,
-        _id: chat._id.toString(),
-    }));
+    return chats.map(
+        ({ _id, ...rest }): IChat => ({
+            ...rest,
+            _id: _id.toString(),
+        }),
+    );
 }
 
 export async function deleteUserChat(chatId: string, userId: string): Promise<void> {

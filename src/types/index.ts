@@ -53,6 +53,7 @@ export interface IChat {
     referenceId: string;
     title: string;
     createdAt?: string | Date;
+    updatedAt?: Date;
 }
 
 // rest of the types
