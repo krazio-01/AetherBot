@@ -98,6 +98,11 @@
         }
     }
 
+    .message-attachment-container {
+        margin-bottom: 0.75rem;
+        max-width: 100%;
+    }
+
     .message-actions {
         display: flex;
         align-items: center;

@@ -10,9 +10,10 @@ import { LuCopy, LuDownload } from 'react-icons/lu';
 import { MdErrorOutline } from 'react-icons/md';
 import LogoImage from '../../../../../public/images/logo.png';
 import { ISessionUser, IMessage } from '@/types';
-import { ChatRole } from '@/types/chat';
+import { ChatRole, MediaType } from '@/types/chat';
 import PlayAudioButton from './PlayAudioButton';
 import UserAvatar from '@/components/Ui/UserAvatar/UserAvatar';
+import PdfBadge from '@/components/Ui/PdfBadge/PdfBadge';
 import './message.css';
 
 interface IMessageProps {
@@ -115,7 +116,20 @@ const Message = ({ user, message, loading }: IMessageProps) => {
                     ))
                 ) : (
                     <>
-                        {message?.image && <img src={message.image} alt="image" />}
+                        {message?.attachment && (
+                            <div className="message-attachment-container">
+                                {message.attachment.type === MediaType.IMAGE ? (
+                                    <img
+                                        src={message.attachment.url}
+                                        alt={message.attachment.name || 'Uploaded image'}
+                                        className="chat-attached-image"
+                                    />
+                                ) : (
+                                    <PdfBadge name={message.attachment.name} />
+                                )}
+                            </div>
+                        )}
+
                         {message.parts.map((part, index) => (
                             <MarkDownBlock
                                 key={index}
@@ -201,7 +215,19 @@ const LoadingComponent = ({ user, message }: ILoadingComponentProps) => (
         <div className="message-user">
             <UserAvatar avatar={user?.avatar} size={30} />
             <div className="message-content">
-                {message?.image && <img src={message.image} alt="Loading image" />}
+                {message?.attachment && (
+                    <div className="message-attachment-container">
+                        {message.attachment.type === MediaType.IMAGE ? (
+                            <img
+                                src={message.attachment.url}
+                                alt="Loading attached image"
+                                className="chat-attached-image"
+                            />
+                        ) : (
+                            <PdfBadge name={message.attachment.name} />
+                        )}
+                    </div>
+                )}
                 {message.parts.map((part, index) => (
                     <p key={index}>{part.text}</p>
                 ))}
