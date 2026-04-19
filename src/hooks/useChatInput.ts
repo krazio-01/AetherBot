@@ -17,7 +17,8 @@ export const useChatSubmit = (
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const { postRequest } = useRequest();
 
-    const { input, setInput, loading, setLoading, setIsNewChat, messages, updateMessages } = useAppStore();
+    const { input, setInput, loading, setLoading, setIsNewChat, messages, chats, setChats, updateMessages } =
+        useAppStore();
 
     const adjustTextareaHeight = (reset: boolean = false) => {
         if (!textareaRef.current) return;
@@ -71,6 +72,16 @@ export const useChatSubmit = (
 
             if (res.success && res.data) {
                 updateMessages(createChatMessage(ChatRole.MODEL, res.data.modelMessage));
+
+                const updatedChats = [...chats];
+                const index = updatedChats.findIndex((c) => c.referenceId === res.data!.referenceId);
+
+                if (index > 0) {
+                    const [movedChat] = updatedChats.splice(index, 1);
+                    updatedChats.unshift(movedChat);
+                    setChats(updatedChats);
+                }
+
                 return res.data.referenceId;
             }
         } catch (error: any) {
