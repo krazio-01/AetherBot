@@ -1,4 +1,4 @@
-import { useRef, FormEvent, KeyboardEvent } from 'react';
+import { useRef, KeyboardEvent, SyntheticEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import useAppStore from '@/store/store';
@@ -97,7 +97,7 @@ export const useChatSubmit = (
         }
     };
 
-    const handleSubmit = async (e?: FormEvent<HTMLFormElement> | KeyboardEvent<HTMLTextAreaElement>) => {
+    const handleSubmit = async (e?: SyntheticEvent<HTMLFormElement> | KeyboardEvent<HTMLTextAreaElement>) => {
         if (e) e.preventDefault();
 
         if (!input.trim() || uploadState.loading || loading) return;

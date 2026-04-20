@@ -206,7 +206,7 @@
                         background-color: var(--items-hover);
                     }
 
-                    &.disabled {
+                    &:disabled {
                         opacity: 0.5;
                         pointer-events: none;
                     }
