@@ -40,6 +40,18 @@ export class ResponseWrapper {
         );
     }
 
+    static stream(stream: ReadableStream, customHeaders: Record<string, string> = {}, status: number = 200) {
+        return new Response(stream, {
+            status,
+            headers: {
+                'Content-Type': 'text/plain; charset=utf-8',
+                'Cache-Control': 'no-cache',
+                Connection: 'keep-alive',
+                ...customHeaders,
+            },
+        });
+    }
+
     static error(message?: string, status: number = 400) {
         return NextResponse.json(
             {
