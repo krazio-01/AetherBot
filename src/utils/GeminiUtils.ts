@@ -106,34 +106,39 @@ const executeWithFailover = async <T>(
     throw new Error(getFriendlyErrorMessage(lastError));
 };
 
-const multiTurnConversation = async (prompt: string, history: Content[] = []): Promise<string> => {
+const multiTurnConversationStream = async (prompt: string, history: Content[] = []) => {
     return executeWithFailover(async (model) => {
-        const response = await ai.models.generateContent({
+        const chat = ai.chats.create({
             model,
-            contents: [...history, { role: 'user', parts: [{ text: prompt }] }],
+            history,
             config,
         });
-        return response.text;
+
+        const responseStream = await chat.sendMessageStream({
+            message: prompt,
+        });
+
+        return responseStream;
     });
 };
 
-const generateTextFromFileAndPrompt = async (prompt: string, file: File | Blob): Promise<string> => {
+const generateTextFromFileAndPromptStream = async (prompt: string, file: File | Blob, history: Content[] = []) => {
     if (!file) throw new Error(GENERAL_ERRORS.MISSING_FILE);
 
     const base64Data = Buffer.from(await file.arrayBuffer()).toString('base64');
 
     return executeWithFailover(async (model) => {
-        const response = await ai.models.generateContent({
+        const chat = ai.chats.create({
             model,
-            contents: [
-                {
-                    role: 'user',
-                    parts: [{ text: prompt }, { inlineData: { data: base64Data, mimeType: file.type } }],
-                },
-            ],
+            history,
             config,
         });
-        return response.text;
+
+        const responseStream = await chat.sendMessageStream({
+            message: [{ text: prompt }, { inlineData: { data: base64Data, mimeType: file.type } }],
+        });
+
+        return responseStream;
     });
 };
 
@@ -166,4 +171,4 @@ const generateAudioFromText = async (text: string, voiceName: GeminiVoice = Gemi
     }, TTS_MODEL_PRIORITY_LIST);
 };
 
-export { multiTurnConversation, generateTextFromFileAndPrompt, generateAudioFromText };
+export { multiTurnConversationStream, generateTextFromFileAndPromptStream, generateAudioFromText };

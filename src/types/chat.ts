@@ -18,11 +18,6 @@ export interface IUploadFileResponse {
     url: string;
 }
 
-export interface ICreateChatResponse {
-    modelMessage: string;
-    referenceId: string;
-}
-
 export interface IChatResponse {
     chats: IChat[];
 }
