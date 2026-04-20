@@ -22,10 +22,7 @@ export const useFileUpload = (isAuthenticated: boolean) => {
     const { postRequest, deleteRequest, cancel } = useRequest();
     const [uploadState, setUploadState] = useState<IUploadState>(initialState);
 
-    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
+    const processFile = async (file: File) => {
         if (uploadState.attachment) handleCancelFile();
 
         const isImage = file.type.startsWith('image/');
@@ -38,10 +35,7 @@ export const useFileUpload = (isAuthenticated: boolean) => {
             attachment: { file, url: localUrl, type: fileType, name: file.name },
         });
 
-        if (!isAuthenticated) {
-            e.target.value = '';
-            return;
-        }
+        if (!isAuthenticated) return;
 
         try {
             const formData = new FormData();
@@ -59,9 +53,16 @@ export const useFileUpload = (isAuthenticated: boolean) => {
             if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('canceled'))) return;
             toast.error(error instanceof Error ? error.message : 'File upload failed');
             setUploadState(initialState);
-        } finally {
-            e.target.value = '';
         }
+    };
+
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        await processFile(file);
+
+        e.target.value = '';
     };
 
     const handleCancelFile = () => {
@@ -85,5 +86,5 @@ export const useFileUpload = (isAuthenticated: boolean) => {
         setUploadState(initialState);
     };
 
-    return { uploadState, handleFileChange, handleCancelFile, resetUploadState };
+    return { uploadState, handleFileChange, handleCancelFile, resetUploadState, processFile };
 };

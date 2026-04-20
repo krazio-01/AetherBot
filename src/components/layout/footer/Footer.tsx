@@ -1,12 +1,12 @@
 'use client';
-import React, { ChangeEvent, useState, useRef } from 'react';
+import React, { ChangeEvent, useState, useRef, ClipboardEvent, useCallback, memo } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { useAuth } from '@/hooks/useAuth';
 import { Oval } from 'react-loader-spinner';
 import { LuImagePlus, LuPaperclip, LuPlus } from 'react-icons/lu';
 import { IoMdSend } from 'react-icons/io';
 import { RxCross2 } from 'react-icons/rx';
+import { useAuth } from '@/hooks/useAuth';
 import { useFileUpload, IUploadState } from '@/hooks/useFileUpload';
 import { useChatSubmit } from '@/hooks/useChatInput';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
@@ -14,7 +14,17 @@ import { MediaType } from '@/types/chat';
 import PdfBadge from '@/components/Ui/PdfBadge/PdfBadge';
 import './footer.css';
 
-const FileAttachmentPreview = ({ uploadState, onCancel }: { uploadState: IUploadState; onCancel: () => void }) => {
+const UPLOAD_OPTIONS = [
+    { id: 'image-upload', label: 'Upload Image', icon: <LuImagePlus />, accept: 'image/*', name: MediaType.IMAGE },
+    { id: 'pdf-upload', label: 'Upload PDF', icon: <LuPaperclip />, accept: 'application/pdf', name: MediaType.PDF },
+];
+
+interface IFileAttachmentPreviewProps {
+    uploadState: IUploadState;
+    onCancel: () => void;
+}
+
+const FileAttachmentPreview = memo(({ uploadState, onCancel }: IFileAttachmentPreviewProps) => {
     const { attachment, loading } = uploadState;
     if (!attachment && !loading) return null;
 
@@ -42,10 +52,7 @@ const FileAttachmentPreview = ({ uploadState, onCancel }: { uploadState: IUpload
             )}
 
             {attachment?.type === MediaType.PDF && (
-                <PdfBadge
-                    name={attachment.name}
-                    className={uploadState.loading ? 'loading' : ''}
-                />
+                <PdfBadge name={attachment.name} className={loading ? 'loading' : ''} />
             )}
 
             {loading && (
@@ -55,14 +62,18 @@ const FileAttachmentPreview = ({ uploadState, onCancel }: { uploadState: IUpload
             )}
         </div>
     );
-};
+});
+
+FileAttachmentPreview.displayName = 'FileAttachmentPreview';
 
 const Footer = () => {
     const { isAuthenticated } = useAuth();
     const params = useParams();
     const chatId = params?.chatId as string | undefined;
 
-    const { uploadState, handleFileChange, handleCancelFile, resetUploadState } = useFileUpload(isAuthenticated);
+    const { uploadState, handleFileChange, handleCancelFile, resetUploadState, processFile } =
+        useFileUpload(isAuthenticated);
+
     const { textareaRef, adjustTextareaHeight, handleSubmit, handleKeyDown, input, setInput, loading } = useChatSubmit(
         chatId,
         isAuthenticated,
@@ -75,22 +86,40 @@ const Footer = () => {
 
     useOnClickOutside(menuRef, () => setIsMenuOpen(false));
 
-    const UPLOAD_OPTIONS = [
-        { id: 'image-upload', label: 'Upload Image', icon: <LuImagePlus />, accept: 'image/*', name: MediaType.IMAGE },
-        { id: 'pdf-upload', label: 'Upload PDF', icon: <LuPaperclip />, accept: 'application/pdf', name: MediaType.PDF },
-    ];
+    const onFileSelect = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            handleFileChange(e);
+            setIsMenuOpen(false);
+        },
+        [handleFileChange],
+    );
 
-    const onFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-        handleFileChange(e);
-        setIsMenuOpen(false);
-    };
+    const handleInputChange = useCallback(
+        (e: ChangeEvent<HTMLTextAreaElement>) => {
+            setInput(e.target.value);
+            adjustTextareaHeight();
+        },
+        [setInput, adjustTextareaHeight],
+    );
 
-    const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-        setInput(e.target.value);
-        adjustTextareaHeight();
-    };
+    const handlePaste = useCallback(
+        (e: ClipboardEvent<HTMLTextAreaElement>) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
 
-    const isSubmitDisabled = loading || !input.trim() || uploadState.loading;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].kind === 'file') {
+                    const file = items[i].getAsFile();
+                    if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
+                        e.preventDefault();
+                        processFile(file);
+                        break;
+                    }
+                }
+            }
+        },
+        [processFile],
+    );
 
     return (
         <div className="input-box">
@@ -102,7 +131,7 @@ const Footer = () => {
                         <button
                             type="button"
                             className={`toggle-menu-btn ${isMenuOpen ? 'active' : ''}`}
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            onClick={() => setIsMenuOpen((prev) => !prev)}
                             aria-label="Toggle attachment menu"
                             disabled={uploadState.loading}
                         >
@@ -136,6 +165,7 @@ const Footer = () => {
                             value={input}
                             onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
+                            onPaste={handlePaste}
                             disabled={loading}
                             rows={1}
                             aria-label="Chat input"
@@ -145,8 +175,8 @@ const Footer = () => {
                     <div className="footer-input-actions">
                         <button
                             type="submit"
-                            disabled={isSubmitDisabled}
-                            className={`send-btn ${isSubmitDisabled ? 'disabled' : ''}`}
+                            disabled={loading || !input.trim() || uploadState.loading}
+                            className="send-btn"
                             aria-label="Send message"
                         >
                             <IoMdSend />
