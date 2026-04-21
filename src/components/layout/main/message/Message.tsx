@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import Image, { StaticImageData } from 'next/image';
 import Markdown, { Components } from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
@@ -8,6 +8,7 @@ import { ThreeDots } from 'react-loader-spinner';
 import { toast } from 'sonner';
 import { LuCopy, LuDownload } from 'react-icons/lu';
 import { MdErrorOutline } from 'react-icons/md';
+import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io';
 import LogoImage from '../../../../../public/images/logo.png';
 import { ISessionUser, IMessage } from '@/types';
 import { ChatRole, MediaType } from '@/types/chat';
@@ -28,24 +29,13 @@ interface IMarkDownBlockProps {
     role: ChatRole;
 }
 
-interface ILoadingComponentProps {
-    user?: ISessionUser | null;
-    message: IMessage;
-}
-
 const cleanTextForSpeech = (text: string): string => {
     let clean = text;
-
     clean = clean.replace(/```[\s\S]*?```/g, '. ');
-
     clean = clean.replace(/`([^`]+)`/g, '$1');
-
     clean = clean.replace(/!\[([^\]]*)\]\([^)]+\)/g, '');
-
     clean = clean.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-
     clean = clean.replace(/https?:\/\/[^\s]+/g, 'this link');
-
     clean = clean.replace(/(\d+)-(\d+)/g, '$1 to $2');
     clean = clean.replace(/%/g, ' percent');
     clean = clean.replace(/°C/g, ' degrees Celsius');
@@ -53,17 +43,58 @@ const cleanTextForSpeech = (text: string): string => {
     clean = clean.replace(/&/g, ' and ');
     clean = clean.replace(/\+/g, ' plus ');
     clean = clean.replace(/=/g, ' equals ');
-
     clean = clean.replace(/[*_~#|>]/g, '');
-
     clean = clean.replace(/[()]/g, ', ');
     clean = clean.replace(/[{}[\]]/g, '');
-
     clean = clean.replace(/,\s*,/g, ',');
     clean = clean.replace(/,\s*\./g, '.');
     clean = clean.replace(/\s{2,}/g, ' ');
-
     return clean.trim();
+};
+
+const CollapsibleText = ({ text }: { text: string }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isCollapsible, setIsCollapsible] = useState(false);
+    const [contentHeight, setContentHeight] = useState(0);
+
+    const contentRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (contentRef.current) {
+            const height = contentRef.current.scrollHeight;
+            setContentHeight(height);
+            if (height > 160) setIsCollapsible(true);
+        }
+    }, [text]);
+
+    return (
+        <div className="collapsible-container">
+            <div
+                className={`collapsible-text ${isCollapsible && !isExpanded ? 'collapsed' : 'expanded'}`}
+                style={{ maxHeight: isExpanded ? `${contentHeight + 20}px` : undefined }}
+            >
+                <div className="collapsible-inner" ref={contentRef}>
+                    <p>{text}</p>
+                </div>
+            </div>
+
+            {isCollapsible && (
+                <button onClick={() => setIsExpanded(!isExpanded)} className="collapsible-btn">
+                    {isExpanded ? (
+                        <>
+                            <IoIosArrowUp />
+                            Show less
+                        </>
+                    ) : (
+                        <>
+                            <IoIosArrowDown />
+                            Show more
+                        </>
+                    )}
+                </button>
+            )}
+        </div>
+    );
 };
 
 const Message = ({ user, message, loading }: IMessageProps) => {
@@ -91,71 +122,85 @@ const Message = ({ user, message, loading }: IMessageProps) => {
         URL.revokeObjectURL(url);
     }, [fullText]);
 
-    if (loading) return <LoadingComponent user={user} message={message} />;
-
     return (
-        <div className={`message-${message.role}`}>
-            {message.role === ChatRole.USER ? (
-                <UserAvatar avatar={user?.avatar} size={30} />
-            ) : (
-                <Image
-                    src={LogoImage as StaticImageData}
-                    alt="Model Avatar"
-                    width={45}
-                    height={45}
-                    className="avatar-img"
-                />
-            )}
-            <div className="message-content">
-                {message?.isError ? (
-                    message.parts.map((part, index) => (
-                        <div className="response-error" key={index}>
-                            <MdErrorOutline />
-                            <span>{part.text}</span>
-                        </div>
-                    ))
+        <>
+            <div className={`message-${message.role}`}>
+                {message.role === ChatRole.USER ? (
+                    <UserAvatar avatar={user?.avatar} size={30} />
                 ) : (
-                    <>
-                        {message?.attachment && (
-                            <div className="message-attachment-container">
-                                {message.attachment.type === MediaType.IMAGE ? (
-                                    <img
-                                        src={message.attachment.url}
-                                        alt={message.attachment.name || 'Uploaded image'}
-                                        className="chat-attached-image"
-                                    />
-                                ) : (
-                                    <PdfBadge name={message.attachment.name} />
-                                )}
+                    <Image
+                        src={LogoImage as StaticImageData}
+                        alt="Model Avatar"
+                        width={45}
+                        height={45}
+                        className="avatar-img"
+                    />
+                )}
+
+                <div className="message-content">
+                    {message?.isError ? (
+                        message.parts.map((part, index) => (
+                            <div className="response-error" key={index}>
+                                <MdErrorOutline />
+                                <span>{part.text}</span>
                             </div>
-                        )}
+                        ))
+                    ) : (
+                        <>
+                            {message?.attachment && (
+                                <div className="message-attachment-container">
+                                    {message.attachment.type === MediaType.IMAGE ? (
+                                        <img
+                                            src={message.attachment.url}
+                                            alt={message.attachment.name || 'Uploaded image'}
+                                            className="chat-attached-image"
+                                        />
+                                    ) : (
+                                        <PdfBadge name={message.attachment.name} />
+                                    )}
+                                </div>
+                            )}
 
-                        {message.parts.map((part, index) => (
-                            <MarkDownBlock
-                                key={index}
-                                part={part}
-                                handleCopyClick={handleCopyClick}
-                                role={message.role}
-                            />
-                        ))}
-                    </>
-                )}
+                            {message.parts.map((part, index) => (
+                                <MarkDownBlock
+                                    key={index}
+                                    part={part}
+                                    handleCopyClick={handleCopyClick}
+                                    role={message.role}
+                                />
+                            ))}
+                        </>
+                    )}
 
-                {message.role === ChatRole.MODEL && (
-                    <div className="message-actions">
-                        <button onClick={handleCopyFullMessage} title="Copy response">
-                            <LuCopy />
-                        </button>
-
-                        <PlayAudioButton text={cleanTextForSpeech(fullText)} />
-
-                        <button onClick={handleDownload} title="Download response">
-                            <LuDownload />
-                        </button>
-                    </div>
-                )}
+                    {message.role === ChatRole.MODEL && !loading && (
+                        <div className="message-actions">
+                            <button onClick={handleCopyFullMessage} title="Copy response">
+                                <LuCopy />
+                            </button>
+                            <PlayAudioButton text={cleanTextForSpeech(fullText)} />
+                            <button onClick={handleDownload} title="Download response">
+                                <LuDownload />
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
+
+            {loading && message.role === ChatRole.USER && (
+                <div className="message-model">
+                    <Image
+                        src={LogoImage as StaticImageData}
+                        alt="Model Avatar"
+                        width={45}
+                        height={45}
+                        className="avatar-img"
+                    />
+                    <div className="response-loading">
+                        <ThreeDots visible={true} height="36" width="36" color="var(--blue)" radius="9" />
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 
@@ -204,43 +249,8 @@ const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, r
     return role === ChatRole.MODEL ? (
         <Markdown components={markdownComponents}>{part.text}</Markdown>
     ) : (
-        <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-            <p>{part.text}</p>
-        </div>
+        <CollapsibleText text={part.text} />
     );
 });
-
-const LoadingComponent = ({ user, message }: ILoadingComponentProps) => (
-    <>
-        <div className="message-user">
-            <UserAvatar avatar={user?.avatar} size={30} />
-            <div className="message-content">
-                {message?.attachment && (
-                    <div className="message-attachment-container">
-                        {message.attachment.type === MediaType.IMAGE ? (
-                            <img
-                                src={message.attachment.url}
-                                alt="Loading attached image"
-                                className="chat-attached-image"
-                            />
-                        ) : (
-                            <PdfBadge name={message.attachment.name} />
-                        )}
-                    </div>
-                )}
-                {message.parts.map((part, index) => (
-                    <p key={index}>{part.text}</p>
-                ))}
-            </div>
-        </div>
-
-        <div className="message-model">
-            <Image src={LogoImage as StaticImageData} alt="Logo" width={45} height={45} />
-            <div className="response-loading">
-                <ThreeDots visible={true} height="36" width="36" color="var(--blue)" radius="9" />
-            </div>
-        </div>
-    </>
-);
 
 export default memo(Message);

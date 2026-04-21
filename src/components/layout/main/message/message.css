@@ -98,6 +98,61 @@
         }
     }
 
+    .collapsible-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+
+        .collapsible-text {
+            width: 100%;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+
+            &.collapsed {
+                max-height: 160px;
+                -webkit-mask-image: linear-gradient(to bottom, black 90px, transparent 100%);
+                mask-image: linear-gradient(to bottom, black 90px, transparent 100%);
+            }
+
+            &.expanded {
+                -webkit-mask-image: none;
+                mask-image: none;
+            }
+
+            .collapsible-inner {
+                overflow: hidden;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
+        }
+
+        .collapsible-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--light-text-clr, #888);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.15s ease;
+
+            &:hover {
+                color: var(--text-clr);
+            }
+
+            svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+    }
+
     .message-attachment-container {
         margin-bottom: 0.75rem;
         max-width: 100%;
