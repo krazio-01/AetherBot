@@ -70,7 +70,10 @@ export async function createChatInteraction(params: IProcessChatParams) {
         };
     }
 
-    if (!chatDoc) chatDoc = new Chat({ userId, referenceId: uuidv4(), title: prompt });
+    const MAX_TITLE_LENGTH = 40;
+    const chatTitle = prompt.length > MAX_TITLE_LENGTH ? `${prompt.substring(0, MAX_TITLE_LENGTH).trim()}...` : prompt;
+
+    if (!chatDoc) chatDoc = new Chat({ userId, referenceId: uuidv4(), title: chatTitle });
     else chatDoc.updatedAt = new Date();
 
     const conversationTurn = new Interaction({
