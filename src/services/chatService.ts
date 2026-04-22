@@ -1,10 +1,10 @@
 import Chat from '@/models/chatModel';
 import Interaction from '@/models/interactionModel';
-import { multiTurnConversation, generateTextFromFileAndPrompt } from '@/utils/GeminiUtils';
+import { multiTurnConversationStream, generateTextFromFileAndPromptStream } from '@/utils/GeminiUtils';
 import { fileService } from '@/services/fileService';
 import { v4 as uuidv4 } from 'uuid';
 import { Content } from '@google/genai';
-import { ChatRole, ICreateChatResponse, MediaType } from '@/types/chat';
+import { ChatRole, MediaType } from '@/types/chat';
 import { IChat } from '@/types';
 
 interface IProcessChatParams {
@@ -20,8 +20,11 @@ interface IProcessChatParams {
     historyRaw?: string | null;
 }
 
-export async function createChatInteraction(params: IProcessChatParams): Promise<ICreateChatResponse> {
-    const { userId, prompt, attachment, rawFile, referenceId, historyRaw } = params;
+const getChatHistoryAndDoc = async (
+    userId: string | undefined,
+    referenceId: string | null | undefined,
+    historyRaw: string | null | undefined,
+) => {
     let geminiHistory: Content[] = [];
     let chatDoc: any = null;
 
@@ -48,16 +51,22 @@ export async function createChatInteraction(params: IProcessChatParams): Promise
         ]);
     }
 
-    let geminiResponse: string;
+    return { chatDoc, geminiHistory };
+};
 
-    if (rawFile) geminiResponse = await generateTextFromFileAndPrompt(prompt, rawFile);
-    else geminiResponse = await multiTurnConversation(prompt, geminiHistory);
+export async function createChatInteraction(params: IProcessChatParams) {
+    const { userId, prompt, attachment, rawFile, referenceId, historyRaw } = params;
+
+    let { chatDoc, geminiHistory } = await getChatHistoryAndDoc(userId, referenceId, historyRaw);
+
+    const stream = rawFile
+        ? await generateTextFromFileAndPromptStream(prompt, rawFile, geminiHistory)
+        : await multiTurnConversationStream(prompt, geminiHistory);
 
     if (!userId) {
-        const currentGuestId = referenceId?.startsWith('guest_') ? referenceId : `guest_${uuidv4()}`;
         return {
-            modelMessage: geminiResponse,
-            referenceId: currentGuestId,
+            stream,
+            referenceId: referenceId?.startsWith('guest_') ? referenceId : `guest_${uuidv4()}`,
         };
     }
 
@@ -67,19 +76,30 @@ export async function createChatInteraction(params: IProcessChatParams): Promise
     const conversationTurn = new Interaction({
         chatId: chatDoc.referenceId,
         userMessage: { text: prompt, attachment },
-        modelMessage: { text: geminiResponse },
+        modelMessage: { text: ' ' },
     });
 
     await Promise.all([conversationTurn.save(), chatDoc.save()]);
 
     return {
-        modelMessage: geminiResponse,
+        stream,
         referenceId: chatDoc.referenceId,
+        interactionId: conversationTurn._id,
     };
 }
 
+export async function finalizeInteraction(interactionId: string, modelText: string) {
+    if (!interactionId) return;
+    await Interaction.findByIdAndUpdate(interactionId, {
+        $set: { 'modelMessage.text': modelText },
+    });
+}
+
 export async function getUserChats(userId: string): Promise<IChat[]> {
-    const chats = await Chat.find({ userId }).select('-createdAt -userId -__v -updatedAt').sort({ updatedAt: -1 }).lean();
+    const chats = await Chat.find({ userId })
+        .select('-createdAt -userId -__v -updatedAt')
+        .sort({ updatedAt: -1 })
+        .lean();
 
     return chats.map(
         ({ _id, ...rest }): IChat => ({
