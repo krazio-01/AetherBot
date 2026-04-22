@@ -23,9 +23,13 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
     const setIsNewChat = useAppStore((state) => state.setIsNewChat);
 
     const { getRequest, isPending, cancel } = useRequest();
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const router = useRouter();
 
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const isScrolledUp = useRef(false);
+    const prevMessageCount = useRef(0);
+
+    const router = useRouter();
     const { user } = useAuth();
 
     useEffect(() => {
@@ -37,7 +41,6 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
                 router.push('/chat');
                 return;
             }
-
             setIsNewChat(false);
             return;
         }
@@ -67,13 +70,27 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
 
         fetchMessages();
 
-        return () => {
-            cancel();
-        };
+        return () => cancel();
     }, [chatId, setMessages, setIsNewChat, cancel, getRequest, router]);
 
+    const handleScroll = () => {
+        if (!scrollContainerRef.current) return;
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+
+        const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+        isScrolledUp.current = distanceToBottom > 50;
+    };
+
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const isNewMessage = messages.length > prevMessageCount.current;
+        prevMessageCount.current = messages.length;
+
+        if (isNewMessage || !isScrolledUp.current) {
+            messagesEndRef.current?.scrollIntoView({
+                behavior: isNewMessage ? 'smooth' : 'auto',
+            });
+            isScrolledUp.current = false;
+        }
     }, [messages]);
 
     return (
@@ -91,7 +108,7 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
                 </div>
             ) : (
                 <div className="chatbox-wrapper">
-                    <div className="result-box">
+                    <div className="result-box" ref={scrollContainerRef} onScroll={handleScroll}>
                         <div className="boxi">
                             {messages.map((message, index) => (
                                 <Message
