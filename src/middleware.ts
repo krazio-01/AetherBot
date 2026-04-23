@@ -8,7 +8,7 @@ const PUBLIC_PATHS = new Set<string>([
     '/register',
     '/verifyEmail',
     '/forgot-password',
-    '/forgot-password/request',
+    '/reset-password',
 ]);
 const PROTECTED_PATHS: string[] = [];
 
@@ -20,11 +20,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const isPublicPath = PUBLIC_PATHS.has(pathname);
     const isProtectedPath = PROTECTED_PATHS.some((protectedPath) => pathname.startsWith(protectedPath));
 
-    if (pathname.startsWith('/forgot-password/change') && !tokenParams)
+    if (pathname.startsWith('/reset-password') && !tokenParams)
         return NextResponse.redirect(new URL('/', request.url));
 
     if (token) {
-        if (isPublicPath || pathname.startsWith('/forgot-password/change'))
+        if (isPublicPath || pathname.startsWith('/reset-password'))
             return NextResponse.redirect(new URL('/chat', request.url));
     } else {
         if (isProtectedPath) return NextResponse.redirect(new URL('/', request.url));
@@ -41,7 +41,7 @@ export const config = {
         '/login',
         '/register',
         '/verifyEmail',
-        '/forgot-password/request',
-        '/forgot-password/change',
+        '/forgot-password',
+        '/reset-password',
     ],
 };
