@@ -20,7 +20,6 @@ export const GET = apiHandler(async (request: NextRequest) => {
 
 export const POST = apiHandler(async (request: NextRequest) => {
     const session = await getServerSession(authOptions);
-    if (!session?.user?._id) throw new ErrorWrapper(401, 'Unauthorized');
 
     const formData = await request.formData();
     const prompt = formData.get('prompt') as string | null;
@@ -39,7 +38,7 @@ export const POST = apiHandler(async (request: NextRequest) => {
 
     try {
         const { stream, referenceId, interactionId } = await createChatInteraction({
-            userId: session.user._id,
+            userId: session?.user?._id,
             prompt,
             attachment,
             rawFile: formData.get('file') as File | null,
