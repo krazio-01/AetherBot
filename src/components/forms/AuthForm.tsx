@@ -65,7 +65,7 @@ const AuthForm = ({
 
                 {forgotPassword && (
                     <div className="forgot-password">
-                        <Link href="/forgot-password/request">Forgot password?</Link>
+                        <Link href="/forgot-password">Forgot password?</Link>
                     </div>
                 )}
 
