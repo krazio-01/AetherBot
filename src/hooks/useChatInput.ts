@@ -12,12 +12,14 @@ export const createChatMessage = (
     attachment?: { url: string; type: MediaType; name: string },
     isError: boolean = false,
     clientId?: string,
+    isStreaming: boolean = false,
 ): IMessage => ({
     client_id: clientId || crypto.randomUUID(),
     role,
     parts: [{ text }],
     attachment,
     isError,
+    isStreaming,
 });
 
 const buildFormData = (
@@ -207,11 +209,17 @@ export const useChatSubmit = (
                 if (toastId) toast.success('Conversation initialized!', { id: toastId });
             }
 
-            updateMessages(createChatMessage(ChatRole.MODEL, '', undefined, false, modelMessageId));
+            updateMessages(createChatMessage(ChatRole.MODEL, '', undefined, false, modelMessageId, true));
             setLoading(false);
 
             const reader = response.body.getReader();
             finalStreamedText = await processStream(reader, modelMessageId);
+
+            useAppStore.setState((state) => ({
+                messages: state.messages.map((msg) =>
+                    msg.client_id === modelMessageId ? { ...msg, isStreaming: false } : msg,
+                ),
+            }));
 
             return headerReferenceId || currentChatId;
         } catch (error: any) {
@@ -228,6 +236,7 @@ export const useChatSubmit = (
                                 ...msg,
                                 isError: true,
                                 parts: [{ text: finalStreamedText + '\n\n[Error: Connection interrupted]' }],
+                                isStreaming: false,
                             }
                             : msg,
                     ),

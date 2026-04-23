@@ -45,6 +45,7 @@ export interface IMessage {
         name: string;
     };
     isError?: boolean;
+    isStreaming?: boolean;
 }
 
 export interface IChat {

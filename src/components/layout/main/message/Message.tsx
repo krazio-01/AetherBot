@@ -172,7 +172,7 @@ const Message = ({ user, message, loading }: IMessageProps) => {
                         </>
                     )}
 
-                    {message.role === ChatRole.MODEL && !loading && (
+                    {message.role === ChatRole.MODEL && !loading && !message.isStreaming && !message.isError && (
                         <div className="message-actions">
                             <button onClick={handleCopyFullMessage} title="Copy response">
                                 <LuCopy />
