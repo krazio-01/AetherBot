@@ -21,7 +21,7 @@ export default async function VerifyEmailPage({ searchParams }: IVeifyEmailPageP
     let message = '';
 
     try {
-        const res = await fetch(`${process.env.FRONTEND_URL}/api/auth/verifyEmail`, {
+        const res = await fetch(`${process.env.FRONTEND_URL}/api/auth/verify-email`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

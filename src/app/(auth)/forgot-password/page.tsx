@@ -6,7 +6,7 @@ import { IAuthField } from '@/types';
 import { useRequest } from '@/hooks/useRequest';
 import { IPasswordResetRequest } from '@/types/auth';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import '../../auth.css';
+import '../auth.css';
 
 const Page = () => {
     const { postRequest, isPending } = useRequest();
@@ -17,7 +17,7 @@ const Page = () => {
     const formFields: IAuthField[] = [{ name: 'email', label: 'Email', type: 'email', icon: <MdEmail /> }];
 
     const handleChangeRequest = async () => {
-        const res = await postRequest<void, IPasswordResetRequest>('/auth/forgot-password/request', {
+        const res = await postRequest<void, IPasswordResetRequest>('/auth/forgot-password', {
             email: emailRef.current?.value || '',
         });
 
@@ -52,7 +52,7 @@ const Page = () => {
                         loading={isPending}
                         onSubmit={handleChangeRequest}
                         loadingText="Sending email..."
-                        redirectUrl="/forgot-password/request"
+                        redirectUrl="/forgot-password"
                         submitButtonText="Continue"
                     />
                 </div>

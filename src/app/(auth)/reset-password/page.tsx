@@ -8,10 +8,10 @@ import { FaLock } from 'react-icons/fa';
 import { IAuthField } from '@/types';
 import { IPasswordChangeRequest } from '@/types/auth';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import '../../auth.css';
+import '../auth.css';
 
 const PageInner = () => {
-    const { postRequest, isPending } = useRequest();
+    const { putRequest, isPending } = useRequest();
 
     const newPasswordRef = useRef<HTMLInputElement>(null);
     const confirmNewPasswordRef = useRef<HTMLInputElement>(null);
@@ -31,7 +31,7 @@ const PageInner = () => {
 
         if (newPassword !== confirmPassword) throw 'Passwords do not match';
 
-        const res = await postRequest<void, IPasswordChangeRequest>('/auth/forgot-password/change', {
+        const res = await putRequest<void, IPasswordChangeRequest>('/auth/reset-password', {
             token,
             newPassword,
         });
