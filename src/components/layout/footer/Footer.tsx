@@ -3,7 +3,7 @@ import React, { ChangeEvent, useState, useRef, ClipboardEvent, useCallback, memo
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Oval } from 'react-loader-spinner';
-import { LuImagePlus, LuPaperclip, LuPlus } from 'react-icons/lu';
+import { LuImagePlus, LuPaperclip, LuPlus, LuSquare } from 'react-icons/lu';
 import { IoMdSend } from 'react-icons/io';
 import { RxCross2 } from 'react-icons/rx';
 import { useAuth } from '@/hooks/useAuth';
@@ -74,12 +74,17 @@ const Footer = () => {
     const { uploadState, handleFileChange, handleCancelFile, resetUploadState, processFile } =
         useFileUpload(isAuthenticated);
 
-    const { textareaRef, adjustTextareaHeight, handleSubmit, handleKeyDown, input, setInput, loading } = useChatSubmit(
-        chatId,
-        isAuthenticated,
-        uploadState,
-        resetUploadState,
-    );
+    const {
+        textareaRef,
+        adjustTextareaHeight,
+        handleSubmit,
+        handleKeyDown,
+        input,
+        setInput,
+        loading,
+        stopGeneration,
+        isGenerating,
+    } = useChatSubmit(chatId, isAuthenticated, uploadState, resetUploadState);
 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -173,14 +178,26 @@ const Footer = () => {
                     </div>
 
                     <div className="footer-input-actions">
-                        <button
-                            type="submit"
-                            disabled={loading || !input.trim() || uploadState.loading}
-                            className="send-btn"
-                            aria-label="Send message"
-                        >
-                            <IoMdSend />
-                        </button>
+                        {isGenerating ? (
+                            <button
+                                type="button"
+                                onClick={stopGeneration}
+                                className="send-btn"
+                                aria-label="Stop generation"
+                                title="Stop generation"
+                            >
+                                <LuSquare />
+                            </button>
+                        ) : (
+                            <button
+                                type="submit"
+                                disabled={!input.trim() || uploadState.loading}
+                                className="send-btn"
+                                aria-label="Send message"
+                            >
+                                <IoMdSend />
+                            </button>
+                        )}
                     </div>
                 </div>
             </form>

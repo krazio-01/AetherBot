@@ -1,4 +1,4 @@
-import { useRef, KeyboardEvent, SyntheticEvent } from 'react';
+import { useRef, KeyboardEvent, SyntheticEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import useAppStore from '@/store/store';
@@ -115,7 +115,6 @@ const processStream = async (reader: ReadableStreamDefaultReader<Uint8Array>, mo
 
             if (uiText.length < networkText.length) {
                 const remainingChars = networkText.length - uiText.length;
-
                 const speedMultiplier = Math.max(1, remainingChars / 40);
                 const currentSpeed = BASE_SPEED * speedMultiplier;
 
@@ -124,11 +123,10 @@ const processStream = async (reader: ReadableStreamDefaultReader<Uint8Array>, mo
 
                 if (charsToAdd > 0) {
                     const actualCharsToAdd = Math.min(charsToAdd, remainingChars);
-
                     uiText += networkText.substring(uiText.length, uiText.length + actualCharsToAdd);
                     fractionalChars -= actualCharsToAdd;
 
-                    if (currentTime - lastReactUpdateTime > 35 || uiText.length === networkText.length) {
+                    if (currentTime - lastReactUpdateTime > 80 || uiText.length === networkText.length) {
                         updateModelMessageInStore(modelMessageId, uiText);
                         lastReactUpdateTime = currentTime;
                     }
@@ -171,16 +169,22 @@ export const useChatSubmit = (
     const { textareaRef, adjustTextareaHeight } = useTextareaAutoResize();
     const { input, setInput, loading, setLoading, setIsNewChat, messages, updateMessages } = useAppStore();
 
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const abortControllerRef = useRef<AbortController | null>(null);
+
     const updateChat = async (currentChatId: string | undefined, newMessage: IMessage) => {
         const previousMessages = [...messages];
         updateMessages(newMessage);
 
         const modelMessageId = crypto.randomUUID();
         let finalStreamedText = '';
-
         let toastId: string | number | undefined;
 
+        abortControllerRef.current = new AbortController();
+
         try {
+            setIsGenerating(true);
             setLoading(true);
             setInput('');
             resetUploadState();
@@ -193,6 +197,7 @@ export const useChatSubmit = (
             const response = await fetch('/api/chats', {
                 method: 'POST',
                 body: formData,
+                signal: abortControllerRef.current?.signal,
             });
 
             if (!response.ok) {
@@ -224,6 +229,16 @@ export const useChatSubmit = (
             return headerReferenceId || currentChatId;
         } catch (error: any) {
             console.error('Stream error:', error);
+
+            if (error.name === 'AbortError') {
+                useAppStore.setState((state) => ({
+                    messages: state.messages.map((msg) =>
+                        msg.client_id === modelMessageId ? { ...msg, isStreaming: false } : msg,
+                    ),
+                }));
+                return currentChatId;
+            }
+
             const errorMessage = typeof error === 'string' ? error : error?.message || 'An unexpected error occurred.';
 
             if (!currentChatId && toastId) toast.error(errorMessage, { id: toastId });
@@ -247,6 +262,8 @@ export const useChatSubmit = (
             throw new Error(errorMessage);
         } finally {
             setLoading(false);
+            setIsGenerating(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -255,8 +272,6 @@ export const useChatSubmit = (
         if (!input.trim() || uploadState.loading || loading) return;
 
         const newMessage = createChatMessage(ChatRole.USER, input, uploadState.attachment || undefined);
-
-        // 5. Remove toast.promise, just await the function normally
         await updateChat(chatId, newMessage);
     };
 
@@ -267,13 +282,19 @@ export const useChatSubmit = (
         }
     };
 
+    const stopGeneration = () => {
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
+
     return {
         textareaRef,
         adjustTextareaHeight,
         handleSubmit,
         handleKeyDown,
+        stopGeneration,
         input,
         setInput,
         loading,
+        isGenerating
     };
 };
