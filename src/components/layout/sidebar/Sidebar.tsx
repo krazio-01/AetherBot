@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, MouseEvent } from 'react';
+import { useState, useEffect, useRef, MouseEvent, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import useAppStore from '@/store/store';
@@ -38,6 +38,11 @@ const Sidebar = () => {
 
     const settingsRef = useRef<HTMLButtonElement>(null);
     const params = useParams();
+
+    const clearActiveChatState = useCallback(() => {
+        setMessages([]);
+        setIsNewChat(true);
+    }, [setMessages, setIsNewChat]);
 
     const toggleMenu = (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
@@ -137,6 +142,7 @@ const Sidebar = () => {
                                             chat={chat}
                                             removeChat={removeChat}
                                             isActive={params?.chatId === chat.referenceId}
+                                            clearActiveChatState={clearActiveChatState}
                                         />
                                     ))}
                                 </ul>

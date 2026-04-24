@@ -15,9 +15,10 @@ interface IChatsProps {
     chat: IChat;
     removeChat: (id: string) => void;
     isActive: boolean;
+    clearActiveChatState: () => void;
 }
 
-const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
+const Chats = ({ chat, removeChat, isActive, clearActiveChatState }: IChatsProps) => {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -54,7 +55,10 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
             loading: 'Deleting...',
             success: (message) => {
                 removeChat(chat.referenceId);
-                if (isActive) router.push('/chat');
+                if (isActive) {
+                    clearActiveChatState();
+                    router.push('/chat');
+                }
                 return message;
             },
             error: (err) => err,
@@ -89,7 +93,7 @@ const Chats = ({ chat, removeChat, isActive }: IChatsProps) => {
 
                 <button
                     type="button"
-                    id='three-dots'
+                    id="three-dots"
                     onClick={toggleMenu}
                     ref={dotsRef}
                     aria-label="Chat options"
