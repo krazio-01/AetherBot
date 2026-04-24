@@ -223,7 +223,6 @@ const getMarkdownComponents = (handleCopyClick: (content: string) => void): Comp
                     style={atomOneDark}
                     language={match[1]}
                     PreTag="div"
-                    showLineNumbers
                     lineNumberStyle={{
                         minWidth: '2rem',
                         paddingRight: '1rem',
