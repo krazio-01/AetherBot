@@ -1,12 +1,11 @@
 import { useRef, KeyboardEvent, SyntheticEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import useAppStore from '@/store/store';
 import { ChatRole, MediaType } from '@/types/chat';
 import { IMessage } from '@/types';
 import { IUploadState } from './useFileUpload';
 
-export const createChatMessage = (
+const createChatMessage = (
     role: ChatRole,
     text: string,
     attachment?: { url: string; type: MediaType; name: string },
@@ -51,101 +50,43 @@ const buildFormData = (
     return formData;
 };
 
-const updateModelMessageInStore = (modelMessageId: string, uiText: string) => {
-    useAppStore.setState((state) => {
-        const updatedMessages = [...state.messages];
-        const lastIndex = updatedMessages.length - 1;
-        const lastMsg = updatedMessages[lastIndex];
-
-        const index = updatedMessages.findIndex((msg) => msg.client_id === modelMessageId);
-
-        if (index !== -1) {
-            updatedMessages[index] = { ...updatedMessages[index], parts: [{ text: uiText }] };
-            return { messages: updatedMessages };
-        }
-
-        if (lastMsg?.role === ChatRole.MODEL) {
-            updatedMessages[lastIndex] = {
-                ...lastMsg,
-                parts: [{ text: uiText }],
-                client_id: modelMessageId,
-            };
-            return { messages: updatedMessages };
-        }
-
-        return state;
-    });
-};
-
-const processStream = async (reader: ReadableStreamDefaultReader<Uint8Array>, modelMessageId: string) => {
+const processStream = async (reader: ReadableStreamDefaultReader<Uint8Array>, onChunk: (text: string) => void) => {
     const decoder = new TextDecoder('utf-8');
-    let networkText = '';
-    let uiText = '';
-    let isStreamDone = false;
+    let fullText = '';
 
-    const readNetwork = async () => {
-        try {
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) {
-                    isStreamDone = true;
-                    break;
-                }
-                networkText += decoder.decode(value, { stream: true });
-            }
-        } catch (error) {
-            isStreamDone = true;
-            console.error('Stream read error:', error);
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            fullText += chunk;
+
+            onChunk(fullText);
         }
-    };
+    } catch (error) {
+        console.error('Stream read error:', error);
+        throw error;
+    }
 
-    readNetwork();
-
-    return new Promise<string>((resolve) => {
-        let lastDrawTime = performance.now();
-        let lastReactUpdateTime = 0;
-        let fractionalChars = 0;
-        let animationFrameId: number;
-
-        const BASE_SPEED = 250;
-
-        const updateUI = (currentTime: number) => {
-            const deltaTime = currentTime - lastDrawTime;
-            lastDrawTime = currentTime;
-
-            if (uiText.length < networkText.length) {
-                const remainingChars = networkText.length - uiText.length;
-                const speedMultiplier = Math.max(1, remainingChars / 40);
-                const currentSpeed = BASE_SPEED * speedMultiplier;
-
-                fractionalChars += (currentSpeed * deltaTime) / 1000;
-                const charsToAdd = Math.floor(fractionalChars);
-
-                if (charsToAdd > 0) {
-                    const actualCharsToAdd = Math.min(charsToAdd, remainingChars);
-                    uiText += networkText.substring(uiText.length, uiText.length + actualCharsToAdd);
-                    fractionalChars -= actualCharsToAdd;
-
-                    if (currentTime - lastReactUpdateTime > 80 || uiText.length === networkText.length) {
-                        updateModelMessageInStore(modelMessageId, uiText);
-                        lastReactUpdateTime = currentTime;
-                    }
-                }
-            }
-
-            if (!isStreamDone || uiText.length < networkText.length) {
-                animationFrameId = requestAnimationFrame(updateUI);
-            } else {
-                updateModelMessageInStore(modelMessageId, uiText);
-                resolve(networkText);
-            }
-        };
-
-        animationFrameId = requestAnimationFrame(updateUI);
-    });
+    return fullText;
 };
 
-export const useTextareaAutoResize = () => {
+const sortChatList = (currentChatId: string) => {
+    if (currentChatId) {
+        const state = useAppStore.getState();
+        const chatIndex = state.chats.findIndex((c) => c.referenceId === currentChatId);
+
+        if (chatIndex > 0) {
+            const updatedChats = [...state.chats];
+            const [chatToMove] = updatedChats.splice(chatIndex, 1);
+            updatedChats.unshift(chatToMove);
+            state.setChats(updatedChats);
+        }
+    }
+}
+
+const useTextareaAutoResize = () => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const adjustTextareaHeight = (reset: boolean = false) => {
@@ -165,23 +106,71 @@ export const useChatSubmit = (
     uploadState: IUploadState,
     resetUploadState: () => void,
 ) => {
-    const router = useRouter();
+    const input = useAppStore((state) => state.input);
+    const setInput = useAppStore((state) => state.setInput);
+    const loading = useAppStore((state) => state.loading);
+    const setLoading = useAppStore((state) => state.setLoading);
+    const setCurrentChatId = useAppStore((state) => state.setCurrentChatId);
+    const messages = useAppStore((state) => state.messages);
+    const updateMessages = useAppStore((state) => state.updateMessages);
+    const editMessage = useAppStore((state) => state.editMessage);
+
     const { textareaRef, adjustTextareaHeight } = useTextareaAutoResize();
-    const { input, setInput, loading, setLoading, setIsNewChat, messages, updateMessages } = useAppStore();
 
     const [isGenerating, setIsGenerating] = useState(false);
-
     const abortControllerRef = useRef<AbortController | null>(null);
 
+    const networkTextRef = useRef('');
+    const uiTextRef = useRef('');
+    const animationFrameRef = useRef(null);
+
+    const startTypingAnimation = (modelMessageId: string) => {
+        let lastDrawTime = performance.now();
+        let fractionalChars = 0;
+        const BASE_SPEED = 250;
+
+        const updateUI = (currentTime: number) => {
+            const networkText = networkTextRef.current;
+            let uiText = uiTextRef.current;
+
+            const deltaTime = currentTime - lastDrawTime;
+            lastDrawTime = currentTime;
+
+            if (uiText.length < networkText.length) {
+                const remainingChars = networkText.length - uiText.length;
+                const speedMultiplier = Math.max(1, remainingChars / 40);
+                const currentSpeed = BASE_SPEED * speedMultiplier;
+
+                fractionalChars += (currentSpeed * deltaTime) / 1000;
+                const charsToAdd = Math.floor(fractionalChars);
+
+                if (charsToAdd > 0) {
+                    const actualCharsToAdd = Math.min(charsToAdd, remainingChars);
+                    uiText += networkText.substring(uiText.length, uiText.length + actualCharsToAdd);
+                    fractionalChars -= actualCharsToAdd;
+
+                    uiTextRef.current = uiText;
+                    editMessage(modelMessageId, {
+                        parts: [{ text: uiText }],
+                        isStreaming: true,
+                    });
+                }
+            }
+
+            animationFrameRef.current = requestAnimationFrame(updateUI);
+        };
+
+        animationFrameRef.current = requestAnimationFrame(updateUI);
+    };
+
     const updateChat = async (currentChatId: string | undefined, newMessage: IMessage) => {
-        const previousMessages = [...messages];
         updateMessages(newMessage);
 
-        const modelMessageId = crypto.randomUUID();
-        let finalStreamedText = '';
-        let toastId: string | number | undefined;
+        sortChatList(currentChatId);
 
+        const modelMessageId = crypto.randomUUID();
         abortControllerRef.current = new AbortController();
+        let toastId: string | number | undefined;
 
         try {
             setIsGenerating(true);
@@ -189,8 +178,6 @@ export const useChatSubmit = (
             setInput('');
             resetUploadState();
             adjustTextareaHeight(true);
-
-            if (!currentChatId) toastId = toast.loading('Initializing chat...');
 
             const formData = buildFormData(currentChatId, input, isAuthenticated, messages, uploadState);
 
@@ -208,58 +195,69 @@ export const useChatSubmit = (
 
             const headerReferenceId = response.headers.get('x-reference-id');
 
-            if (!currentChatId && headerReferenceId) {
-                setIsNewChat(true);
-                router.push(`/chat/${headerReferenceId}`);
-                if (toastId) toast.success('Conversation initialized!', { id: toastId });
-            }
+            if (!currentChatId && headerReferenceId) window.history.replaceState(null, '', `/chat/${headerReferenceId}`);
+
+            setCurrentChatId(headerReferenceId || currentChatId);
 
             updateMessages(createChatMessage(ChatRole.MODEL, '', undefined, false, modelMessageId, true));
             setLoading(false);
 
-            const reader = response.body.getReader();
-            finalStreamedText = await processStream(reader, modelMessageId);
+            networkTextRef.current = '';
+            uiTextRef.current = '';
 
-            useAppStore.setState((state) => ({
-                messages: state.messages.map((msg) =>
-                    msg.client_id === modelMessageId ? { ...msg, isStreaming: false } : msg,
-                ),
-            }));
+            startTypingAnimation(modelMessageId);
+
+            const reader = response.body.getReader();
+            const finalStreamedText = await processStream(reader, (newNetworkText) => {
+                networkTextRef.current = newNetworkText;
+            });
+
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+            editMessage(modelMessageId, {
+                parts: [{ text: finalStreamedText }],
+                isStreaming: false,
+            });
 
             return headerReferenceId || currentChatId;
         } catch (error: any) {
             console.error('Stream error:', error);
+            if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
             if (error.name === 'AbortError') {
-                useAppStore.setState((state) => ({
-                    messages: state.messages.map((msg) =>
-                        msg.client_id === modelMessageId ? { ...msg, isStreaming: false } : msg,
-                    ),
-                }));
+                editMessage(modelMessageId, {
+                    parts: [{ text: uiTextRef.current }],
+                    isStreaming: false,
+                });
                 return currentChatId;
             }
 
             const errorMessage = typeof error === 'string' ? error : error?.message || 'An unexpected error occurred.';
 
-            if (!currentChatId && toastId) toast.error(errorMessage, { id: toastId });
+            if (toastId) toast.error(errorMessage, { id: toastId });
+            else toast.error(errorMessage);
 
-            if (currentChatId) {
-                useAppStore.setState((state) => ({
-                    messages: state.messages.map((msg) =>
-                        msg.client_id === modelMessageId
-                            ? {
-                                ...msg,
-                                isError: true,
-                                parts: [{ text: finalStreamedText + '\n\n[Error: Connection interrupted]' }],
-                                isStreaming: false,
-                            }
-                            : msg,
-                    ),
-                }));
+            const hasModelMessage = useAppStore.getState().messages.some((msg) => msg.client_id === modelMessageId);
+
+            if (hasModelMessage) {
+                editMessage(modelMessageId, {
+                    isError: true,
+                    parts: [{ text: uiTextRef.current + `\n\n[Error: ${errorMessage}]` }],
+                    isStreaming: false,
+                });
             } else {
-                useAppStore.setState({ messages: previousMessages });
+                updateMessages(
+                    createChatMessage(
+                        ChatRole.MODEL,
+                        `System Error: ${errorMessage}. Please try again.`,
+                        undefined,
+                        true,
+                        modelMessageId,
+                        false,
+                    ),
+                );
             }
-            throw new Error(errorMessage);
+
+            return currentChatId;
         } finally {
             setLoading(false);
             setIsGenerating(false);
@@ -295,6 +293,6 @@ export const useChatSubmit = (
         input,
         setInput,
         loading,
-        isGenerating
+        isGenerating,
     };
 };
