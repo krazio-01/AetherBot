@@ -38,6 +38,13 @@ const Chats = ({ chat, removeChat, isActive, clearActiveChatState }: IChatsProps
         setIsMenuOpen((prev) => !prev);
     }, []);
 
+    const handleLinkClick = useCallback(
+        (e: MouseEvent<HTMLAnchorElement>) => {
+            if (isActive) e.preventDefault();
+        },
+        [isActive],
+    );
+
     const handleConfirmDelete = useCallback(() => {
         setIsModalOpen(false);
 
@@ -85,7 +92,11 @@ const Chats = ({ chat, removeChat, isActive, clearActiveChatState }: IChatsProps
 
     return (
         <li className={`history-item ${isMenuOpen ? 'menu-open' : ''}`}>
-            <Link href={`/chat/${chat.referenceId}`} className={`history-link ${isActive ? 'active' : ''}`}>
+            <Link
+                href={`/chat/${chat.referenceId}`}
+                className={`history-link ${isActive ? 'active' : ''}`}
+                onClick={handleLinkClick}
+            >
                 <div className="chat-title">
                     <MdChatBubbleOutline />
                     <span>{chat.title}</span>
