@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, MouseEvent, useCallback } from 'react';
+import { useState, useEffect, useRef, MouseEvent, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import useAppStore from '@/store/store';
@@ -37,6 +37,7 @@ const Sidebar = () => {
     const { getRequest } = useRequest();
 
     const settingsRef = useRef<HTMLButtonElement>(null);
+    const initialFetchDone = useRef<boolean>(false);
     const params = useParams();
 
     const clearActiveChatState = useCallback(() => {
@@ -44,27 +45,30 @@ const Sidebar = () => {
         setIsNewChat(true);
     }, [setMessages, setIsNewChat]);
 
-    const toggleMenu = (e: MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
+    const toggleMenu = useCallback(
+        (e: MouseEvent<HTMLButtonElement>) => {
+            e.preventDefault();
 
-        if (!settingsRef.current) return;
+            if (!settingsRef.current) return;
 
-        const rect = settingsRef.current.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        const menuHeight = 42;
-        let left = rect.right - 100;
+            const rect = settingsRef.current.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const menuHeight = 42;
+            let left = rect.right - 100;
 
-        if (!sidebarIsOpen) {
-            const menuWidth = 180;
-            left = rect.left - menuWidth;
-            if (left < 0) left = 10;
-        }
+            if (!sidebarIsOpen) {
+                const menuWidth = 180;
+                left = rect.left - menuWidth;
+                if (left < 0) left = 10;
+            }
 
-        const top = rect.bottom + menuHeight > viewportHeight ? rect.top - menuHeight : rect.bottom;
+            const top = rect.bottom + menuHeight > viewportHeight ? rect.top - menuHeight : rect.bottom;
 
-        setMenuPosition({ top, left });
-        setIsMenuOpen((prev) => !prev);
-    };
+            setMenuPosition({ top, left });
+            setIsMenuOpen((prev) => !prev);
+        },
+        [sidebarIsOpen],
+    );
 
     useEffect(() => {
         if (isLoading) return;
@@ -72,13 +76,14 @@ const Sidebar = () => {
         if (isGuest) {
             setChatsLoading(false);
             setChats([]);
-            if (isNewChat) setIsNewChat(false);
             return;
         }
 
+        if (initialFetchDone.current && !isNewChat) return;
+
         const fetchChats = async () => {
             try {
-                setChatsLoading(true);
+                if (!initialFetchDone.current) setChatsLoading(true);
 
                 const res = await getRequest<IChatResponse>('/chats');
 
@@ -87,24 +92,29 @@ const Sidebar = () => {
                 toast.error(typeof error === 'string' ? error : 'Failed to fetch chats');
             } finally {
                 setChatsLoading(false);
-                if (isNewChat) setIsNewChat(false);
+                initialFetchDone.current = true;
+                setIsNewChat(false);
             }
         };
 
         fetchChats();
-    }, [isNewChat, isLoading, isGuest, getRequest]);
+    }, [isNewChat, chats, isLoading, isGuest, getRequest]);
 
-    const handleNewChatClick = () => {
+    const handleNewChatClick = useCallback(() => {
         setMessages([]);
         setInput('');
-    };
+        setIsNewChat(true);
+    }, [setMessages, setInput, setIsNewChat]);
 
-    const menuItems: IMenuItem[] = [
-        {
-            icon: <MdDarkMode />,
-            content: <ThemeToggle variant="switch" />,
-        },
-    ];
+    const menuItems: IMenuItem[] = useMemo(
+        () => [
+            {
+                icon: <MdDarkMode />,
+                content: <ThemeToggle variant="switch" />,
+            },
+        ],
+        [],
+    );
 
     return (
         <div className={`sidebar ${sidebarIsOpen ? 'active' : ''}`}>
