@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, MouseEvent, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import useAppStore from '@/store/store';
 import Chats from '@/components/layout/sidebar/chats/Chats';
 import ToggleButton from '@/components/Ui/Sidebar-Toggle/ToggleButton';
@@ -21,8 +20,8 @@ import './sidebar.css';
 const Sidebar = () => {
     const chats = useAppStore((state) => state.chats);
     const setChats = useAppStore((state) => state.setChats);
-    const isNewChat = useAppStore((state) => state.isNewChat);
-    const setIsNewChat = useAppStore((state) => state.setIsNewChat);
+    const currentChatId = useAppStore((state) => state.currentChatId);
+    const setCurrentChatId = useAppStore((state) => state.setCurrentChatId);
     const removeChat = useAppStore((state) => state.removeChat);
     const sidebarIsOpen = useAppStore((state) => state.sidebarIsOpen);
     const setMessages = useAppStore((state) => state.setMessages);
@@ -38,12 +37,11 @@ const Sidebar = () => {
 
     const settingsRef = useRef<HTMLButtonElement>(null);
     const initialFetchDone = useRef<boolean>(false);
-    const params = useParams();
 
     const clearActiveChatState = useCallback(() => {
         setMessages([]);
-        setIsNewChat(true);
-    }, [setMessages, setIsNewChat]);
+        setCurrentChatId(null);
+    }, [setMessages, setCurrentChatId]);
 
     const toggleMenu = useCallback(
         (e: MouseEvent<HTMLButtonElement>) => {
@@ -74,16 +72,19 @@ const Sidebar = () => {
         if (isLoading) return;
 
         if (isGuest) {
-            setChatsLoading(false);
-            setChats([]);
+            if (chatsLoading) setChatsLoading(false);
+            if (chats.length > 0) setChats([]);
             return;
         }
 
-        if (initialFetchDone.current && !isNewChat) return;
+        const isInitialLoad = !initialFetchDone.current;
+        const isMissingNewChat = currentChatId && !chats.some((chat) => chat.referenceId === currentChatId);
+
+        if (!isInitialLoad && !isMissingNewChat) return;
 
         const fetchChats = async () => {
             try {
-                if (!initialFetchDone.current) setChatsLoading(true);
+                if (isInitialLoad) setChatsLoading(true);
 
                 const res = await getRequest<IChatResponse>('/chats');
 
@@ -93,18 +94,17 @@ const Sidebar = () => {
             } finally {
                 setChatsLoading(false);
                 initialFetchDone.current = true;
-                setIsNewChat(false);
             }
         };
 
         fetchChats();
-    }, [isNewChat, chats, isLoading, isGuest, getRequest]);
+    }, [currentChatId, chats, isLoading, isGuest, getRequest]);
 
     const handleNewChatClick = useCallback(() => {
         setMessages([]);
         setInput('');
-        setIsNewChat(true);
-    }, [setMessages, setInput, setIsNewChat]);
+        setCurrentChatId(null);
+    }, [setMessages, setInput, setCurrentChatId]);
 
     const menuItems: IMenuItem[] = useMemo(
         () => [
@@ -151,7 +151,7 @@ const Sidebar = () => {
                                             key={chat?.referenceId}
                                             chat={chat}
                                             removeChat={removeChat}
-                                            isActive={params?.chatId === chat.referenceId}
+                                            isActive={currentChatId === chat.referenceId}
                                             clearActiveChatState={clearActiveChatState}
                                         />
                                     ))}
