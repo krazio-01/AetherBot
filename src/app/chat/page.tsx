@@ -1,6 +1,6 @@
-import DefaultItems from '@/components/layout/main/defaultItems/DefaultItems';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { getServerSession } from 'next-auth';
+import ChatContainer from '@/components/layout/main/ChatContainer/ChatContainer';
 
 const Page = async () => {
     const session = await getServerSession(authOptions);
@@ -8,14 +8,8 @@ const Page = async () => {
 
     return (
         <div className="chatbox-main">
-            <div className="chatbox-wrapper">
-                <div className="chatbox-default fade-in-up">
-                    <div className="greeting">
-                        <h2>Hey {user?.name || 'there'}</h2>
-                    </div>
-
-                    <DefaultItems />
-                </div>
+            <div className="chatbox-wrapper only/chat">
+                <ChatContainer user={user} isPending={false} />
             </div>
         </div>
     );

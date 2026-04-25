@@ -30,13 +30,6 @@
                 height: 100%;
                 overflow: hidden;
 
-                .loader {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100%;
-                }
-
                 .chatbox-wrapper {
                     position: relative;
                     display: flex;
@@ -44,31 +37,6 @@
                     flex-direction: column;
                     justify-content: space-between;
                     height: 100%;
-
-                    .chatbox-default {
-                        margin: auto;
-                        padding: 0 1rem;
-
-                        .greeting {
-                            h2 {
-                                text-align: center;
-                                color: var(--blue);
-                                margin-bottom: 2rem;
-                            }
-                        }
-                    }
-
-                    .result-box {
-                        padding-top: 1rem;
-                        padding-inline: 1rem;
-                        width: 100%;
-                        overflow-y: auto;
-
-                        .boxi {
-                            margin-inline: auto;
-                            width: min(750px, 100%);
-                        }
-                    }
                 }
             }
         }
