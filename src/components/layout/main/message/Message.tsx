@@ -15,6 +15,7 @@ import { ChatRole, MediaType } from '@/types/chat';
 import PlayAudioButton from './PlayAudioButton';
 import UserAvatar from '@/components/Ui/UserAvatar/UserAvatar';
 import PdfBadge from '@/components/Ui/PdfBadge/PdfBadge';
+import remarkGfm from 'remark-gfm';
 import './message.css';
 
 interface IMessageProps {
@@ -246,7 +247,9 @@ const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, r
     const markdownComponents = useMemo(() => getMarkdownComponents(handleCopyClick), [handleCopyClick]);
 
     return role === ChatRole.MODEL ? (
-        <Markdown components={markdownComponents}>{part.text}</Markdown>
+        <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+            {part.text}
+        </Markdown>
     ) : (
         <CollapsibleText text={part.text} />
     );
