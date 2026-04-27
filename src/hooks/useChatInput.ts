@@ -275,7 +275,6 @@ export const useChatSubmit = (
 
                 const errorMessage =
                     typeof error === 'string' ? error : error?.message || 'An unexpected error occurred.';
-                toast.error(errorMessage);
 
                 const hasModelMessage = useAppStore.getState().messages.some((m) => m.client_id === modelMessageId);
 
@@ -289,7 +288,7 @@ export const useChatSubmit = (
                     updateMessages(
                         createChatMessage(
                             ChatRole.MODEL,
-                            `System Error: ${errorMessage}. Please try again.`,
+                            errorMessage,
                             undefined,
                             true,
                             modelMessageId,
