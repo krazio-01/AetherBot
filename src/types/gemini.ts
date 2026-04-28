@@ -11,6 +11,7 @@ export const GEMINI_ERROR_MESSAGES: { [key: number]: string } = {
 export enum GENERAL_ERRORS {
     MISSING_FILE = "No file was provided. Please attach a document or image to proceed.",
     NO_AUDIO = "No audio data received from the model.",
+    STREAM_STOPPED = "You cancelled this response."
 };
 
 export enum FALLBACK_ERRORS {
