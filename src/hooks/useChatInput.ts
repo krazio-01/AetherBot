@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect, useCallback, KeyboardEvent, SyntheticEvent } from 'react';
-import { toast } from 'sonner';
 import useAppStore from '@/store/store';
 import { ChatRole, MediaType } from '@/types/chat';
 import { IMessage } from '@/types';
 import { IUploadState } from './useFileUpload';
+import { GENERAL_ERRORS } from '@/types/gemini';
 
 const TYPING_BASE_SPEED = 250;
 const TYPING_BACKLOG_DIVISOR = 44;
@@ -266,10 +266,19 @@ export const useChatSubmit = (
                 }
 
                 if (error?.name === 'AbortError') {
-                    editMessage(modelMessageId, {
-                        parts: [{ text: uiTextRef.current }],
-                        isStreaming: false,
-                    });
+                    const stopMsg = `\n\n> *${GENERAL_ERRORS.STREAM_STOPPED}*`;
+                    const hasModelMessage = useAppStore.getState().messages.some((m) => m.client_id === modelMessageId);
+
+                    if (hasModelMessage)
+                        editMessage(modelMessageId, {
+                            parts: [{ text: uiTextRef.current + stopMsg }],
+                            isStreaming: false,
+                        });
+                    else
+                        updateMessages(
+                            createChatMessage(ChatRole.MODEL, stopMsg, undefined, false, modelMessageId, true),
+                        );
+
                     return currentChatId;
                 }
 
@@ -286,14 +295,7 @@ export const useChatSubmit = (
                     });
                 } else {
                     updateMessages(
-                        createChatMessage(
-                            ChatRole.MODEL,
-                            errorMessage,
-                            undefined,
-                            true,
-                            modelMessageId,
-                            false,
-                        ),
+                        createChatMessage(ChatRole.MODEL, errorMessage, undefined, true, modelMessageId, false),
                     );
                 }
 
