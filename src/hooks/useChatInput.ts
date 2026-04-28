@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback, KeyboardEvent, SyntheticEvent } from 'react';
+import { useRef, useState, useCallback, KeyboardEvent, SyntheticEvent, useEffect } from 'react';
 import useAppStore from '@/store/store';
 import { ChatRole, MediaType } from '@/types/chat';
 import { IMessage } from '@/types';
@@ -105,50 +105,26 @@ const useTextareaAutoResize = () => {
     return { textareaRef, adjustTextareaHeight };
 };
 
-export const useChatSubmit = (
-    chatId: string | undefined,
-    isAuthenticated: boolean,
-    uploadState: IUploadState,
-    resetUploadState: () => void,
-) => {
-    const input = useAppStore((state) => state.input);
-    const setInput = useAppStore((state) => state.setInput);
-    const loading = useAppStore((state) => state.loading);
-    const setLoading = useAppStore((state) => state.setLoading);
-    const setCurrentChatId = useAppStore((state) => state.setCurrentChatId);
-    const updateMessages = useAppStore((state) => state.updateMessages);
+const useTypingSimulator = () => {
     const editMessage = useAppStore((state) => state.editMessage);
-
-    const { textareaRef, adjustTextareaHeight } = useTextareaAutoResize();
-    const [isGenerating, setIsGenerating] = useState(false);
-
-    const abortControllerRef = useRef<AbortController | null>(null);
     const networkTextRef = useRef('');
     const uiTextRef = useRef('');
-    const animationFrameRef = useRef<number | null>(null);
     const streamDoneRef = useRef(false);
-    const uploadStateRef = useRef(uploadState);
-    const resetUploadStateRef = useRef(resetUploadState);
-    const chatIdRef = useRef(chatId);
+    const animationFrameRef = useRef<number | null>(null);
 
-    useEffect(() => {
-        uploadStateRef.current = uploadState;
-    }, [uploadState]);
-
-    useEffect(() => {
-        resetUploadStateRef.current = resetUploadState;
-    }, [resetUploadState]);
-
-    useEffect(() => {
-        chatIdRef.current = chatId;
-    }, [chatId]);
-
-    useEffect(() => {
-        return () => {
-            if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
-            abortControllerRef.current?.abort();
-        };
+    const stopAnimation = useCallback(() => {
+        if (animationFrameRef.current !== null) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+        }
     }, []);
+
+    const resetSimulator = useCallback(() => {
+        stopAnimation();
+        networkTextRef.current = '';
+        uiTextRef.current = '';
+        streamDoneRef.current = false;
+    }, [stopAnimation]);
 
     const startTypingAnimation = useCallback(
         (modelMessageId: string) => {
@@ -171,20 +147,13 @@ export const useChatSubmit = (
                         uiText = networkText.slice(0, uiText.length + charsToAdd);
                         fractionalChars -= charsToAdd;
                         uiTextRef.current = uiText;
-                        editMessage(modelMessageId, {
-                            parts: [{ text: uiText }],
-                            isStreaming: true,
-                        });
+                        editMessage(modelMessageId, { parts: [{ text: uiText }], isStreaming: true });
                     }
                 } else if (streamDoneRef.current) {
-                    editMessage(modelMessageId, {
-                        parts: [{ text: uiText }],
-                        isStreaming: false,
-                    });
+                    editMessage(modelMessageId, { parts: [{ text: uiText }], isStreaming: false });
                     animationFrameRef.current = null;
                     return;
                 }
-
                 animationFrameRef.current = requestAnimationFrame(tick);
             };
 
@@ -193,9 +162,71 @@ export const useChatSubmit = (
         [editMessage],
     );
 
+    useEffect(() => stopAnimation, [stopAnimation]);
+
+    return { startTypingAnimation, resetSimulator, stopAnimation, networkTextRef, uiTextRef, streamDoneRef };
+};
+
+export const useChatSubmit = (
+    chatId: string | undefined,
+    isAuthenticated: boolean,
+    uploadState: IUploadState,
+    resetUploadState: () => void,
+) => {
+    const input = useAppStore((state) => state.input);
+    const setInput = useAppStore((state) => state.setInput);
+    const loading = useAppStore((state) => state.loading);
+    const setLoading = useAppStore((state) => state.setLoading);
+    const setCurrentChatId = useAppStore((state) => state.setCurrentChatId);
+    const updateMessages = useAppStore((state) => state.updateMessages);
+    const editMessage = useAppStore((state) => state.editMessage);
+
+    const [isGenerating, setIsGenerating] = useState(false);
+    const { textareaRef, adjustTextareaHeight } = useTextareaAutoResize();
+    const simulator = useTypingSimulator();
+
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    const latestDeps = useRef({ uploadState, resetUploadState, chatId, isAuthenticated });
+    latestDeps.current = { uploadState, resetUploadState, chatId, isAuthenticated };
+
+    useEffect(() => {
+        return () => abortControllerRef.current?.abort();
+    }, []);
+
     const stopGeneration = useCallback(() => {
         abortControllerRef.current?.abort();
     }, []);
+
+    const handleStreamError = useCallback(
+        (error: any, modelMessageId: string) => {
+            simulator.stopAnimation();
+
+            const uiText = simulator.uiTextRef.current;
+            const hasModelMessage = useAppStore.getState().messages.some((m) => m.client_id === modelMessageId);
+
+            if (error?.name === 'AbortError') {
+                const stopMsg = `\n\n> *${GENERAL_ERRORS.STREAM_STOPPED}*`;
+                if (hasModelMessage)
+                    editMessage(modelMessageId, { parts: [{ text: uiText + stopMsg }], isStreaming: false });
+                else
+                    updateMessages(createChatMessage(ChatRole.MODEL, stopMsg, undefined, false, modelMessageId, true));
+                return;
+            }
+
+            const errorMessage = typeof error === 'string' ? error : error?.message || 'An unexpected error occurred.';
+            if (hasModelMessage) {
+                editMessage(modelMessageId, {
+                    isError: true,
+                    parts: [{ text: `${uiText}\n\n[Error: ${errorMessage}]` }],
+                    isStreaming: false,
+                });
+            } else {
+                updateMessages(createChatMessage(ChatRole.MODEL, errorMessage, undefined, true, modelMessageId, false));
+            }
+        },
+        [editMessage, updateMessages, simulator],
+    );
 
     const updateChat = useCallback(
         async (currentChatId: string | undefined, newMessage: IMessage, currentInput: string) => {
@@ -205,25 +236,23 @@ export const useChatSubmit = (
             const modelMessageId = crypto.randomUUID();
             abortControllerRef.current = new AbortController();
             const { signal } = abortControllerRef.current;
+            const deps = latestDeps.current;
 
-            networkTextRef.current = '';
-            uiTextRef.current = '';
-            streamDoneRef.current = false;
+            simulator.resetSimulator();
 
             try {
                 setIsGenerating(true);
                 setLoading(true);
                 setInput('');
-                resetUploadStateRef.current();
+                deps.resetUploadState();
                 adjustTextareaHeight(true);
 
-                const currentMessages = useAppStore.getState().messages;
                 const formData = buildFormData(
                     currentChatId,
                     currentInput,
-                    isAuthenticated,
-                    currentMessages,
-                    uploadStateRef.current,
+                    deps.isAuthenticated,
+                    useAppStore.getState().messages,
+                    deps.uploadState,
                 );
 
                 const response = await fetch('/api/chats', { method: 'POST', body: formData, signal });
@@ -237,68 +266,25 @@ export const useChatSubmit = (
                 const headerReferenceId = response.headers.get('x-reference-id');
                 if (!currentChatId && headerReferenceId)
                     window.history.replaceState(null, '', `/chat/${headerReferenceId}`);
-
                 setCurrentChatId(headerReferenceId || currentChatId);
 
                 updateMessages(createChatMessage(ChatRole.MODEL, '', undefined, false, modelMessageId, true));
                 setLoading(false);
+                simulator.startTypingAnimation(modelMessageId);
 
-                startTypingAnimation(modelMessageId);
-
-                const reader = response.body.getReader();
                 await processStream(
-                    reader,
+                    response.body.getReader(),
                     (txt) => {
-                        networkTextRef.current = txt;
+                        simulator.networkTextRef.current = txt;
                     },
                     signal,
                 );
 
-                streamDoneRef.current = true;
-
+                simulator.streamDoneRef.current = true;
                 return headerReferenceId || currentChatId;
             } catch (error: any) {
                 console.error('Stream error:', error);
-
-                if (animationFrameRef.current !== null) {
-                    cancelAnimationFrame(animationFrameRef.current);
-                    animationFrameRef.current = null;
-                }
-
-                if (error?.name === 'AbortError') {
-                    const stopMsg = `\n\n> *${GENERAL_ERRORS.STREAM_STOPPED}*`;
-                    const hasModelMessage = useAppStore.getState().messages.some((m) => m.client_id === modelMessageId);
-
-                    if (hasModelMessage)
-                        editMessage(modelMessageId, {
-                            parts: [{ text: uiTextRef.current + stopMsg }],
-                            isStreaming: false,
-                        });
-                    else
-                        updateMessages(
-                            createChatMessage(ChatRole.MODEL, stopMsg, undefined, false, modelMessageId, true),
-                        );
-
-                    return currentChatId;
-                }
-
-                const errorMessage =
-                    typeof error === 'string' ? error : error?.message || 'An unexpected error occurred.';
-
-                const hasModelMessage = useAppStore.getState().messages.some((m) => m.client_id === modelMessageId);
-
-                if (hasModelMessage) {
-                    editMessage(modelMessageId, {
-                        isError: true,
-                        parts: [{ text: `${uiTextRef.current}\n\n[Error: ${errorMessage}]` }],
-                        isStreaming: false,
-                    });
-                } else {
-                    updateMessages(
-                        createChatMessage(ChatRole.MODEL, errorMessage, undefined, true, modelMessageId, false),
-                    );
-                }
-
+                handleStreamError(error, modelMessageId);
                 return currentChatId;
             } finally {
                 setLoading(false);
@@ -306,30 +292,19 @@ export const useChatSubmit = (
                 abortControllerRef.current = null;
             }
         },
-        [
-            isAuthenticated,
-            adjustTextareaHeight,
-            setInput,
-            setLoading,
-            setCurrentChatId,
-            updateMessages,
-            editMessage,
-            startTypingAnimation,
-        ],
+        [updateMessages, setInput, setLoading, setCurrentChatId, adjustTextareaHeight, simulator, handleStreamError],
     );
 
     const handleSubmit = useCallback(
         async (e?: SyntheticEvent<HTMLFormElement> | KeyboardEvent<HTMLTextAreaElement>) => {
             e?.preventDefault();
             const { input: currentInput, loading: currentLoading } = useAppStore.getState();
-            if (!currentInput.trim() || uploadStateRef.current.loading || currentLoading) return;
+            const deps = latestDeps.current;
 
-            const newMessage = createChatMessage(
-                ChatRole.USER,
-                currentInput,
-                uploadStateRef.current.attachment || undefined,
-            );
-            await updateChat(chatIdRef.current, newMessage, currentInput);
+            if (!currentInput.trim() || deps.uploadState.loading || currentLoading) return;
+
+            const newMessage = createChatMessage(ChatRole.USER, currentInput, deps.uploadState.attachment || undefined);
+            await updateChat(deps.chatId, newMessage, currentInput);
         },
         [updateChat],
     );
