@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import useAppStore from '@/store/store';
@@ -23,11 +23,14 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
     const router = useRouter();
     const { user } = useAuth();
 
+    const chatStateRef = useRef({ currentChatId, msgCount: messages.length });
+    chatStateRef.current = { currentChatId, msgCount: messages.length };
+
     useEffect(() => {
         if (!chatId) return;
 
         if (chatId.startsWith('guest_')) {
-            if (messages.length === 0) {
+            if (chatStateRef.current.msgCount === 0) {
                 toast.info('Guest chat session expired.');
                 router.push('/chat');
                 return;
@@ -35,7 +38,7 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
             return;
         }
 
-        if (currentChatId === chatId && messages.length > 0) return;
+        if (chatStateRef.current.currentChatId === chatId && chatStateRef.current.msgCount > 0) return;
 
         const fetchMessages = async () => {
             try {
@@ -61,11 +64,11 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
 
         fetchMessages();
         return () => cancel();
-    }, [chatId, currentChatId, setMessages, setCurrentChatId, cancel, getRequest, router, messages.length]);
+    }, [chatId, setMessages, setCurrentChatId, cancel, getRequest, router]);
 
     return (
         <div className="chatbox-main">
-            <div className="chatbox-wrapper /chat:id">
+            <div className="chatbox-wrapper">
                 <ChatContainer user={user} isPending={isPending} chatId={chatId} />
             </div>
         </div>

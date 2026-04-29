@@ -8,7 +8,7 @@ const Page = async () => {
 
     return (
         <div className="chatbox-main">
-            <div className="chatbox-wrapper only/chat">
+            <div className="chatbox-wrapper">
                 <ChatContainer user={user} isPending={false} />
             </div>
         </div>
