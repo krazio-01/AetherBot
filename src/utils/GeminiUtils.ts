@@ -148,7 +148,6 @@ const generateAudioFromText = async (text: string, voiceName: GeminiVoice = Gemi
             model,
             contents: text,
             config: {
-                ...config,
                 responseModalities: ['AUDIO'],
                 speechConfig: {
                     voiceConfig: {
