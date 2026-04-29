@@ -310,13 +310,15 @@ export const useChatSubmit = (
     const handleSubmit = useCallback(
         async (e?: SyntheticEvent<HTMLFormElement> | KeyboardEvent<HTMLTextAreaElement>) => {
             e?.preventDefault();
-            const { input: currentInput, loading: currentLoading } = useAppStore.getState();
+
+            const { input: currentInput, loading: currentLoading, currentChatId } = useAppStore.getState();
             const deps = latestDeps.current;
 
             if (!currentInput.trim() || deps.uploadState.loading || currentLoading) return;
 
             const newMessage = createChatMessage(ChatRole.USER, currentInput, deps.uploadState.attachment || undefined);
-            await updateChat(deps.chatId, newMessage, currentInput);
+
+            await updateChat(currentChatId, newMessage, currentInput);
         },
         [updateChat],
     );
