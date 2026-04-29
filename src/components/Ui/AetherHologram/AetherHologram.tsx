@@ -53,14 +53,14 @@ const LogicView = () => (
 const CodeView = () => (
     <div className="view-editor">
         <div className="editor-line">
-            <span className="token comment">// AetherBot: Here is your fetch logic</span>
+            <span className="token comment">{'// AetherBot: Here is your fetch logic'}</span>
         </div>
         <div className="editor-line t-1">
             <span className="token kw">async function</span> <span className="token func">getData</span>() {'{'}
         </div>
         <div className="editor-line t-2 indent">
             <span className="token kw">const</span> res = <span className="token kw">await</span> fetch(
-            <span className="token str">'/api/data'</span>);
+            <span className="token str">{"'/api/data'"}</span>);
         </div>
         <div className="editor-line t-3 indent">
             <span className="token kw">return await</span> res.json();

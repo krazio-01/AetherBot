@@ -70,7 +70,7 @@ const Chats = ({ chat, removeChat, isActive, clearActiveChatState }: IChatsProps
             },
             error: (err) => err,
         });
-    }, [chat.referenceId, deleteRequest, isActive, removeChat, router]);
+    }, [chat.referenceId, deleteRequest, isActive, removeChat, router, clearActiveChatState]);
 
     const menuItems: IMenuItem[] = useMemo(
         () => [

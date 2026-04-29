@@ -98,7 +98,7 @@ const Sidebar = () => {
         };
 
         fetchChats();
-    }, [currentChatId, chats, isLoading, isGuest, getRequest]);
+    }, [currentChatId, chats, isLoading, isGuest, getRequest, chatsLoading, setChats]);
 
     const handleNewChatClick = useCallback(() => {
         setMessages([]);
@@ -133,7 +133,7 @@ const Sidebar = () => {
                         <div className="guest-prompt-card">
                             <p className="prompt-title">Sign in to start saving your chats</p>
                             <p className="prompt-subtitle">
-                                Once you're signed in, you can access your recent chats here.
+                                Once you&apos;re signed in, you can access your recent chats here.
                             </p>
                             <Link href={'/login'} className="sidebar-signin-btn">
                                 Sign in
