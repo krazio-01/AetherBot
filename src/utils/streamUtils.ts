@@ -4,6 +4,7 @@ import { getFriendlyErrorMessage } from '@/utils/GeminiUtils';
 
 interface IStreamChunk {
     text?: string;
+    candidates?: Array<{ finishReason?: string }>;
     [key: string]: any;
 }
 
@@ -78,6 +79,20 @@ export const buildInteractionStream = (
                     if (chunk.text) {
                         fullModelText += chunk.text;
                         controller.enqueue(ENCODER.encode(chunk.text));
+                    }
+
+                    const finishReason = chunk.candidates?.[0]?.finishReason;
+
+                    if (finishReason && finishReason !== 'STOP') {
+                        console.warn(`Stream halted by API. Reason: ${finishReason}`);
+
+                        let reasonMsg = `${FALLBACK_ERRORS.HALTED} (Reason: ${finishReason}).`;
+                        if (finishReason === 'SAFETY') reasonMsg = FALLBACK_ERRORS.SAFETY;
+                        const formattedErr = formatErrorBlock(reasonMsg, fullModelText.length > 0);
+
+                        fullModelText += formattedErr;
+                        controller.enqueue(ENCODER.encode(formattedErr));
+                        break;
                     }
                 }
             } catch (streamError: unknown) {

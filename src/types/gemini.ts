@@ -18,6 +18,8 @@ export enum FALLBACK_ERRORS {
     NETWORK = "I'm experiencing network connectivity issues. Please check your connection and try again.",
     API_UNKNOWN = 'An unexpected AI error occurred. Please try again.',
     GENERAL = "I'm having trouble connecting right now. Please try again in a moment.",
+    SAFETY = "Generation stopped: The response triggered the internal safety and content filters.",
+    HALTED = "Generation halted by API",
 };
 
 export enum GeminiVoice {
