@@ -34,9 +34,12 @@ const finalizeAndClose = async (
     controller: ReadableStreamDefaultController,
     interactionId?: string,
 ) => {
-    const textToSave = finalText.trim() === '' ? FALLBACK_ERRORS.GENERAL : finalText;
+    let textToSave = finalText;
 
-    if (textToSave === FALLBACK_ERRORS.GENERAL) controller.enqueue(ENCODER.encode(textToSave));
+    if (finalText.trim() === '') {
+        textToSave = formatErrorBlock(FALLBACK_ERRORS.GENERAL);
+        controller.enqueue(ENCODER.encode(textToSave));
+    }
 
     try {
         controller.close();
