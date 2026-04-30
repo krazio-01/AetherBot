@@ -9,18 +9,19 @@ export const GEMINI_ERROR_MESSAGES: { [key: number]: string } = {
 };
 
 export enum GENERAL_ERRORS {
-    MISSING_FILE = "No file was provided. Please attach a document or image to proceed.",
-    NO_AUDIO = "No audio data received from the model.",
-    STREAM_STOPPED = "You cancelled this response."
-};
+    MISSING_FILE = 'No file was provided. Please attach a document or image to proceed.',
+    NO_AUDIO = 'No audio data received from the model.',
+    STREAM_STOPPED = 'You cancelled this response.',
+    SAFETY = "Oops, I can't finish that thought! It looks like it was heading into unsafe territory.",
+    HALTED = 'Whew, I ran out of breath! This response reached my maximum length.',
+}
 
 export enum FALLBACK_ERRORS {
     NETWORK = "I'm experiencing network connectivity issues. Please check your connection and try again.",
     API_UNKNOWN = 'An unexpected AI error occurred. Please try again.',
     GENERAL = "I'm having trouble connecting right now. Please try again in a moment.",
-    SAFETY = "Generation stopped: The response triggered the internal safety and content filters.",
-    HALTED = "Generation halted by API",
-};
+    HALTED_GENERAL = "I had to pause this response. Please try asking in a different way."
+}
 
 export enum GeminiVoice {
     PUCK = 'Puck',

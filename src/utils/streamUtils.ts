@@ -1,5 +1,5 @@
 import { finalizeInteraction } from '@/services/chatService';
-import { FALLBACK_ERRORS } from '@/types/gemini';
+import { FALLBACK_ERRORS, GENERAL_ERRORS } from '@/types/gemini';
 import { getFriendlyErrorMessage } from '@/utils/GeminiUtils';
 
 interface IStreamChunk {
@@ -10,55 +10,22 @@ interface IStreamChunk {
 
 const ENCODER = new TextEncoder();
 
-const formatErrorBlock = (message: string, hasPreviousText: boolean = false): string => {
-    const prefix = hasPreviousText ? '\n\n' : '';
-    return `${prefix}\`\`\`error\n${message}\n\`\`\``;
-};
-
-const injectErrorIntoStream = (
-    error: unknown,
-    currentText: string,
-    controller: ReadableStreamDefaultController,
-): string => {
-    console.error('mid-stream error caught:', error);
-
-    const friendlyMsg = getFriendlyErrorMessage(error);
-    const formattedErr = formatErrorBlock(friendlyMsg, currentText.length > 0);
-
+const safeEnqueue = (controller: ReadableStreamDefaultController, text: string) => {
+    if (!text) return;
     try {
-        controller.enqueue(ENCODER.encode(formattedErr));
-    } catch (e) { }
-
-    return currentText + formattedErr;
+        controller.enqueue(ENCODER.encode(text));
+    } catch { }
 };
 
-const finalizeAndClose = async (
-    finalText: string,
-    controller: ReadableStreamDefaultController,
-    interactionId?: string,
-    hasValidText: boolean = false,
-) => {
-    let textToSave = finalText;
-    const shouldDeleteGhost = !hasValidText;
-
-    if (finalText.trim() === '') {
-        textToSave = formatErrorBlock(FALLBACK_ERRORS.GENERAL);
-        try {
-            controller.enqueue(ENCODER.encode(textToSave));
-        } catch (e) { }
-    }
-
+const safeClose = (controller: ReadableStreamDefaultController) => {
     try {
         controller.close();
     } catch { }
+};
 
-    if (interactionId) {
-        try {
-            await finalizeInteraction(interactionId, textToSave, shouldDeleteGhost);
-        } catch (dbError) {
-            console.error('Failed to finalize interaction in DB:', dbError);
-        }
-    }
+const formatErrorBlock = (message: string, hasPreviousText: boolean = false): string => {
+    const prefix = hasPreviousText ? '\n\n' : '';
+    return `${prefix}\`\`\`error\n${message}\n\`\`\``;
 };
 
 export const buildInteractionStream = (
@@ -70,25 +37,26 @@ export const buildInteractionStream = (
         async start(controller) {
             let fullModelText = '';
             let hasValidText = false;
+            let errorPushed = false;
+
+            const pushText = (text: string) => {
+                fullModelText += text;
+                safeEnqueue(controller, text);
+            };
+
+            const pushError = (message: string) => {
+                const formattedErr = formatErrorBlock(message, fullModelText.trim().length > 0);
+                pushText(formattedErr);
+                errorPushed = true;
+            };
 
             try {
-                if (signal.aborted) return;
-
                 for await (const chunk of stream) {
-                    if (signal.aborted) {
-                        console.log('Client aborted connection. Halting stream.');
-                        break;
-                    }
+                    if (signal.aborted) break;
 
                     if (chunk.text) {
                         if (chunk.text.trim() !== '') hasValidText = true;
-
-                        fullModelText += chunk.text;
-                        try {
-                            controller.enqueue(ENCODER.encode(chunk.text));
-                        } catch (e) {
-                            break;
-                        }
+                        pushText(chunk.text);
                     }
 
                     const finishReason = chunk.candidates?.[0]?.finishReason;
@@ -96,31 +64,27 @@ export const buildInteractionStream = (
                     if (finishReason && finishReason !== 'STOP') {
                         console.warn(`Stream halted by API. Reason: ${finishReason}`);
 
-                        let reasonMsg = `${FALLBACK_ERRORS.HALTED} (Reason: ${finishReason}).`;
-                        if (finishReason === 'SAFETY') reasonMsg = FALLBACK_ERRORS.SAFETY;
-
-                        const formattedErr = formatErrorBlock(reasonMsg, hasValidText);
-
-                        fullModelText += formattedErr;
-
-                        try {
-                            controller.enqueue(ENCODER.encode(formattedErr));
-                        } catch (e) { }
-
+                        let reasonMsg: string = FALLBACK_ERRORS.HALTED_GENERAL;
+                        if (finishReason === 'SAFETY') reasonMsg = GENERAL_ERRORS.SAFETY;
+                        else if (finishReason === 'MAX_TOKENS') reasonMsg = GENERAL_ERRORS.HALTED;
+                        pushError(reasonMsg);
                         break;
                     }
                 }
             } catch (streamError: unknown) {
-                const isAbortError =
-                    signal.aborted || (streamError instanceof Error && streamError.name === 'AbortError');
+                const isAbort = signal.aborted || (streamError instanceof Error && streamError.name === 'AbortError');
 
-                if (isAbortError) {
+                if (isAbort) {
                     console.log('Stream stopped via AbortError.');
                 } else {
-                    fullModelText = injectErrorIntoStream(streamError, fullModelText, controller);
+                    console.error('Mid-stream error caught:', streamError);
+                    pushError(getFriendlyErrorMessage(streamError));
                 }
             } finally {
-                await finalizeAndClose(fullModelText, controller, interactionId, hasValidText);
+                if (!hasValidText && !errorPushed) pushError(FALLBACK_ERRORS.GENERAL);
+                safeClose(controller);
+
+                if (interactionId) await finalizeInteraction(interactionId, fullModelText, !hasValidText);
             }
         },
         cancel(reason) {

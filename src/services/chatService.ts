@@ -91,11 +91,25 @@ export async function createChatInteraction(params: IProcessChatParams) {
     };
 }
 
-export async function finalizeInteraction(interactionId: string, modelText: string) {
+export async function finalizeInteraction(
+    interactionId: string,
+    modelText: string,
+    shouldDeleteGhost: boolean = false,
+) {
     if (!interactionId) return;
-    await Interaction.findByIdAndUpdate(interactionId, {
-        $set: { 'modelMessage.text': modelText },
-    });
+
+    try {
+        if (shouldDeleteGhost) {
+            await Interaction.findByIdAndDelete(interactionId);
+            return;
+        }
+
+        await Interaction.findByIdAndUpdate(interactionId, {
+            $set: { 'modelMessage.text': modelText },
+        });
+    } catch (dbError) {
+        console.error(`Failed to finalize interaction ${interactionId}:`, dbError);
+    }
 }
 
 export async function getUserChats(userId: string): Promise<IChat[]> {
