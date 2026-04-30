@@ -9,6 +9,11 @@ interface IStreamChunk {
 
 const ENCODER = new TextEncoder();
 
+const formatErrorBlock = (message: string, hasPreviousText: boolean = false): string => {
+    const prefix = hasPreviousText ? '\n\n' : '';
+    return `${prefix}\`\`\`error\n${message}\n\`\`\``;
+};
+
 const injectErrorIntoStream = (
     error: unknown,
     currentText: string,
@@ -18,8 +23,7 @@ const injectErrorIntoStream = (
 
     const friendlyMsg = getFriendlyErrorMessage(error);
 
-    const prefix = currentText.length === 0 ? '' : '\n\n';
-    const formattedErr = `${prefix}\`\`\`error\n${friendlyMsg}\n\`\`\``;
+    const formattedErr = formatErrorBlock(friendlyMsg, currentText.length > 0);
 
     controller.enqueue(ENCODER.encode(formattedErr));
     return currentText + formattedErr;
