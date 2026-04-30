@@ -23,10 +23,12 @@ const injectErrorIntoStream = (
     console.error('mid-stream error caught:', error);
 
     const friendlyMsg = getFriendlyErrorMessage(error);
-
     const formattedErr = formatErrorBlock(friendlyMsg, currentText.length > 0);
 
-    controller.enqueue(ENCODER.encode(formattedErr));
+    try {
+        controller.enqueue(ENCODER.encode(formattedErr));
+    } catch (e) { }
+
     return currentText + formattedErr;
 };
 
@@ -34,12 +36,16 @@ const finalizeAndClose = async (
     finalText: string,
     controller: ReadableStreamDefaultController,
     interactionId?: string,
+    hasValidText: boolean = false,
 ) => {
     let textToSave = finalText;
+    const shouldDeleteGhost = !hasValidText;
 
     if (finalText.trim() === '') {
         textToSave = formatErrorBlock(FALLBACK_ERRORS.GENERAL);
-        controller.enqueue(ENCODER.encode(textToSave));
+        try {
+            controller.enqueue(ENCODER.encode(textToSave));
+        } catch (e) { }
     }
 
     try {
@@ -48,7 +54,7 @@ const finalizeAndClose = async (
 
     if (interactionId) {
         try {
-            await finalizeInteraction(interactionId, textToSave);
+            await finalizeInteraction(interactionId, textToSave, shouldDeleteGhost);
         } catch (dbError) {
             console.error('Failed to finalize interaction in DB:', dbError);
         }
@@ -62,14 +68,12 @@ export const buildInteractionStream = (
 ): ReadableStream => {
     return new ReadableStream({
         async start(controller) {
-            if (signal.aborted) {
-                controller.close();
-                return;
-            }
-
             let fullModelText = '';
+            let hasValidText = false;
 
             try {
+                if (signal.aborted) return;
+
                 for await (const chunk of stream) {
                     if (signal.aborted) {
                         console.log('Client aborted connection. Halting stream.');
@@ -77,8 +81,14 @@ export const buildInteractionStream = (
                     }
 
                     if (chunk.text) {
+                        if (chunk.text.trim() !== '') hasValidText = true;
+
                         fullModelText += chunk.text;
-                        controller.enqueue(ENCODER.encode(chunk.text));
+                        try {
+                            controller.enqueue(ENCODER.encode(chunk.text));
+                        } catch (e) {
+                            break;
+                        }
                     }
 
                     const finishReason = chunk.candidates?.[0]?.finishReason;
@@ -88,10 +98,15 @@ export const buildInteractionStream = (
 
                         let reasonMsg = `${FALLBACK_ERRORS.HALTED} (Reason: ${finishReason}).`;
                         if (finishReason === 'SAFETY') reasonMsg = FALLBACK_ERRORS.SAFETY;
-                        const formattedErr = formatErrorBlock(reasonMsg, fullModelText.length > 0);
+
+                        const formattedErr = formatErrorBlock(reasonMsg, hasValidText);
 
                         fullModelText += formattedErr;
-                        controller.enqueue(ENCODER.encode(formattedErr));
+
+                        try {
+                            controller.enqueue(ENCODER.encode(formattedErr));
+                        } catch (e) { }
+
                         break;
                     }
                 }
@@ -105,7 +120,7 @@ export const buildInteractionStream = (
                     fullModelText = injectErrorIntoStream(streamError, fullModelText, controller);
                 }
             } finally {
-                await finalizeAndClose(fullModelText, controller, interactionId);
+                await finalizeAndClose(fullModelText, controller, interactionId, hasValidText);
             }
         },
         cancel(reason) {
