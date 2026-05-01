@@ -24,9 +24,10 @@ export enum FALLBACK_ERRORS {
 }
 
 export enum GeminiVoice {
-    PUCK = 'Puck',
-    CHARON = 'Charon',
+    ZEPHYR = 'Zephyr',
     KORE = 'Kore',
-    FENRIR = 'Fenrir',
-    AOEDE = 'Aoede',
+    AUTONOE = 'Autonoe',
+    ERINOME = 'Erinome',
+    LAOMEDEIA = "Laomedeia",
+    AOEDE = 'Aoede'
 }

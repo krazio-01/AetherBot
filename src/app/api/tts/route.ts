@@ -12,7 +12,7 @@ export const POST = apiHandler(async (request: NextRequest) => {
     if (!text) throw new ErrorWrapper(400, 'Text is required to generate speech');
 
     try {
-        const audioBase64 = await generateAudioFromText(text, GeminiVoice.KORE);
+        const audioBase64 = await generateAudioFromText(text, GeminiVoice.AOEDE);
 
         return ResponseWrapper.successWithData<ITTsResponse>({ audio: audioBase64 });
     } catch (error: any) {
