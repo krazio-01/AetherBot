@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import {
     LineChart,
     Line,
@@ -161,4 +161,4 @@ const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartP
     );
 };
 
-export default DataVisualizer;
+export default memo(DataVisualizer);
