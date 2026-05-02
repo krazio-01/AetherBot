@@ -11,6 +11,7 @@ interface InteractiveCodeBlockProps {
     content: string;
     language: string;
     handleCopyClick: (content: string) => void;
+    isStreaming: boolean;
 }
 
 const BROWSER_LANGUAGES = new Set(['javascript', 'js', 'jsx', 'react', 'tsx', 'ts', 'html', 'angular']);
@@ -18,7 +19,7 @@ const BACKEND_LANGUAGES = new Set(['cpp', 'c++', 'c', 'java', 'rust', 'python'])
 
 type SandpackTemplate = 'vanilla' | 'react' | 'angular';
 
-const InteractiveCodeBlock = ({ content, language, handleCopyClick }: InteractiveCodeBlockProps) => {
+const InteractiveCodeBlock = ({ content, language, handleCopyClick, isStreaming }: InteractiveCodeBlockProps) => {
     const lang = language.toLowerCase();
 
     const isBrowserRunnable = BROWSER_LANGUAGES.has(lang);
@@ -81,6 +82,7 @@ const InteractiveCodeBlock = ({ content, language, handleCopyClick }: Interactiv
                         <button
                             onClick={() => setShowPreview((prev) => !prev)}
                             title={showPreview ? 'View Code' : 'Run in Browser'}
+                            disabled={isStreaming}
                         >
                             {showPreview ? <LuCode /> : <LuPlay />}
                         </button>
@@ -89,7 +91,7 @@ const InteractiveCodeBlock = ({ content, language, handleCopyClick }: Interactiv
                     {isBackendRunnable && (
                         <button
                             onClick={runBackendCode}
-                            disabled={isRunningBackend}
+                            disabled={isRunningBackend || isStreaming}
                             title="Run on Server"
                             style={{ color: isRunningBackend ? 'var(--light-text-clr)' : 'inherit' }}
                         >

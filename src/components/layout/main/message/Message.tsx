@@ -28,6 +28,7 @@ interface IMarkDownBlockProps {
     part: { text: string };
     handleCopyClick: (content: string) => void;
     role: ChatRole;
+    message: IMessage;
 }
 
 const cleanTextForSpeech = (text: string): string => {
@@ -52,6 +53,8 @@ const cleanTextForSpeech = (text: string): string => {
     clean = clean.replace(/\s{2,}/g, ' ');
     return clean.trim();
 };
+
+const MARKDOWN_PLUGINS = [remarkGfm];
 
 const CollapsibleText = ({ text }: { text: string }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -99,7 +102,7 @@ const CollapsibleText = ({ text }: { text: string }) => {
 };
 
 const ChartBlockWrapper = memo(
-    ({ content, handleCopyClick }: { content: string; handleCopyClick: (content: string) => void }) => {
+    ({ content, handleCopyClick, isStreaming }: { content: string; handleCopyClick: (content: string) => void, isStreaming: boolean }) => {
         const chartConfig = useMemo(() => {
             const trimmedContent = content.trim();
 
@@ -128,7 +131,7 @@ const ChartBlockWrapper = memo(
         }, [content]);
 
         if (!chartConfig)
-            return <InteractiveCodeBlock content={content} language="json" handleCopyClick={handleCopyClick} />;
+            return <InteractiveCodeBlock content={content} language="json" handleCopyClick={handleCopyClick} isStreaming={isStreaming} />;
 
         return <DataVisualizer data={chartConfig.data} dataKeys={chartConfig.dataKeys} />;
     },
@@ -207,6 +210,7 @@ const Message = ({ user, message, loading }: IMessageProps) => {
                                     part={part}
                                     handleCopyClick={handleCopyClick}
                                     role={message.role}
+                                    message={message}
                                 />
                             ))}
                         </>
@@ -244,7 +248,10 @@ const Message = ({ user, message, loading }: IMessageProps) => {
     );
 };
 
-export const getMarkdownComponents = (handleCopyClick: (content: string) => void): Components => ({
+export const getMarkdownComponents = (
+    handleCopyClick: (content: string) => void,
+    isStreaming: boolean,
+): Components => ({
     code({ node, inline, className, children, ...props }: any) {
         if (inline)
             return (
@@ -267,7 +274,7 @@ export const getMarkdownComponents = (handleCopyClick: (content: string) => void
                 );
 
             case 'aether-chart':
-                return <ChartBlockWrapper content={content} handleCopyClick={handleCopyClick} />;
+                return <ChartBlockWrapper content={content} handleCopyClick={handleCopyClick} isStreaming={isStreaming} />;
 
             case '':
                 return (
@@ -277,16 +284,26 @@ export const getMarkdownComponents = (handleCopyClick: (content: string) => void
                 );
 
             default:
-                return <InteractiveCodeBlock content={content} language={language} handleCopyClick={handleCopyClick} />;
+                return (
+                    <InteractiveCodeBlock
+                        content={content}
+                        language={language}
+                        handleCopyClick={handleCopyClick}
+                        isStreaming={isStreaming}
+                    />
+                );
         }
     },
 });
 
-const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, role }: IMarkDownBlockProps) {
-    const markdownComponents = useMemo(() => getMarkdownComponents(handleCopyClick), [handleCopyClick]);
+const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, role, message }: IMarkDownBlockProps) {
+    const markdownComponents = useMemo(
+        () => getMarkdownComponents(handleCopyClick, message.isStreaming),
+        [handleCopyClick, message.isStreaming],
+    );
 
     return role === ChatRole.MODEL ? (
-        <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        <Markdown remarkPlugins={MARKDOWN_PLUGINS} components={markdownComponents}>
             {part.text}
         </Markdown>
     ) : (
