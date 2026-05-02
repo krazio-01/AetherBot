@@ -30,6 +30,7 @@
     --border-highlight: rgba(0, 0, 0, 0.05);
     --fill-muted: rgba(0, 0, 0, 0.1);
     --fill-strong: rgba(0, 0, 0, 0.2);
+    --code-block-header: var(--bg-glass);
 }
 
 [data-theme='dark'] {
@@ -52,6 +53,7 @@
     --border-highlight: rgba(255, 255, 255, 0.1);
     --fill-muted: rgba(255, 255, 255, 0.1);
     --fill-strong: rgba(255, 255, 255, 0.2);
+    --code-block-header: var(--light-text-clr);
 }
 
 * {

@@ -46,9 +46,14 @@
 .message-model {
     gap: 1rem;
     padding-bottom: 2rem;
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
 
     .message-content {
         width: 100%;
+        max-width: 100%;
+        min-width: 0;
     }
 }
 
@@ -272,62 +277,6 @@
             svg {
                 font-size: 1rem;
             }
-        }
-    }
-}
-
-.code-block {
-    display: grid;
-    margin-bottom: 1rem;
-    border-radius: var(--border-radius);
-    overflow: hidden;
-
-    *::-webkit-scrollbar {
-        width: 4px;
-        height: 4px;
-    }
-
-    *::-webkit-scrollbar-track {
-        background: transparent;
-        margin-inline: 0.5rem;
-    }
-
-    *::-webkit-scrollbar-thumb {
-        background-color: var(--scrollbar-thumb-clr, var(--blue));
-        border-radius: 10px;
-    }
-
-    code {
-        font-size: var(--fz-sm);
-    }
-}
-
-.code-block-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-family: system-ui, sans-serif;
-    background-color: var(--code-header-bg, #282c34);
-    padding-inline: 1rem;
-    padding-top: 1rem;
-    color: var(--code-header-text, #fff);
-
-    button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        width: 34px;
-        height: 34px;
-        padding: 0.5rem;
-        background: transparent;
-        color: inherit;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: background-color 0.15s ease;
-
-        &:hover {
-            background-color: var(--btn-hover-bg, var(--text-color));
         }
     }
 }
