@@ -13,7 +13,27 @@ const TTS_MODEL_PRIORITY_LIST = (process.env.GEMINI_TTS_MODELS || 'gemini-2.5-fl
     .map((model) => model.trim())
     .filter(Boolean);
 
+const SYSTEM_INSTRUCTION = [
+    'Answer questions naturally and helpfully.',
+    '',
+    'When the user explicitly asks for a chart, graph, data visualization, or statistical comparison, you MUST provide the data using a custom Markdown code block labeled ```aether-chart',
+    '',
+    'CRITICAL FORMATTING RULES FOR CHARTS:',
+    '1. The output MUST be a flat JSON array of objects inside the ```aether-chart block.',
+    '2. The FIRST key in every object represents the X-axis label (e.g., "month", "year", "category").',
+    '3. All SUBSEQUENT keys must be numeric values representing the data to be plotted.',
+    '',
+    'Example Chart Output:',
+    '```aether-chart',
+    '[',
+    '  { "Month": "Jan", "Apple": 150, "Microsoft": 120 },',
+    '  { "Month": "Feb", "Apple": 200, "Microsoft": 180 }',
+    ']',
+    '```',
+].join('\n');
+
 const config: GenerateContentConfig = {
+    systemInstruction: SYSTEM_INSTRUCTION,
     temperature: 1,
     topP: 0.95,
     topK: 64,
@@ -108,15 +128,8 @@ const executeWithFailover = async <T>(
 
 const multiTurnConversationStream = async (prompt: string, history: Content[] = []) => {
     return executeWithFailover(async (model) => {
-        const chat = ai.chats.create({
-            model,
-            history,
-            config,
-        });
-
-        const responseStream = await chat.sendMessageStream({
-            message: prompt,
-        });
+        const chat = ai.chats.create({ model, history, config });
+        const responseStream = await chat.sendMessageStream({ message: prompt });
 
         return responseStream;
     });
@@ -124,16 +137,10 @@ const multiTurnConversationStream = async (prompt: string, history: Content[] = 
 
 const generateTextFromFileAndPromptStream = async (prompt: string, file: File | Blob, history: Content[] = []) => {
     if (!file) throw new Error(GENERAL_ERRORS.MISSING_FILE);
-
     const base64Data = Buffer.from(await file.arrayBuffer()).toString('base64');
 
     return executeWithFailover(async (model) => {
-        const chat = ai.chats.create({
-            model,
-            history,
-            config,
-        });
-
+        const chat = ai.chats.create({ model, history, config });
         const responseStream = await chat.sendMessageStream({
             message: [{ text: prompt }, { inlineData: { data: base64Data, mimeType: file.type } }],
         });
@@ -170,4 +177,9 @@ const generateAudioFromText = async (text: string, voiceName: GeminiVoice = Gemi
     }, TTS_MODEL_PRIORITY_LIST);
 };
 
-export { multiTurnConversationStream, generateTextFromFileAndPromptStream, generateAudioFromText };
+export {
+    multiTurnConversationStream,
+    generateTextFromFileAndPromptStream,
+    generateAudioFromText,
+    getFriendlyErrorMessage,
+};
