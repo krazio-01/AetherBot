@@ -1,8 +1,6 @@
 import React, { memo, useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import Image, { StaticImageData } from 'next/image';
 import Markdown, { Components } from 'react-markdown';
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import clipboardCopy from 'clipboard-copy';
 import { ThreeDots } from 'react-loader-spinner';
 import { toast } from 'sonner';
@@ -16,6 +14,8 @@ import PlayAudioButton from './PlayAudioButton';
 import UserAvatar from '@/components/Ui/UserAvatar/UserAvatar';
 import PdfBadge from '@/components/Ui/PdfBadge/PdfBadge';
 import remarkGfm from 'remark-gfm';
+import DataVisualizer from '@/components/InteractiveWidgets/DataVisualizer';
+import InteractiveCodeBlock from '@/components/InteractiveWidgets/InteractiveCodeBlock';
 import './message.css';
 
 interface IMessageProps {
@@ -98,6 +98,44 @@ const CollapsibleText = ({ text }: { text: string }) => {
     );
 };
 
+const ChartBlockWrapper = memo(
+    ({ content, handleCopyClick }: { content: string; handleCopyClick: (content: string) => void }) => {
+        const chartConfig = useMemo(() => {
+            const trimmedContent = content.trim();
+
+            if (!trimmedContent.startsWith('[') || !trimmedContent.endsWith(']')) return null;
+
+            try {
+                const parsedContent = JSON.parse(trimmedContent);
+
+                if (Array.isArray(parsedContent) && parsedContent.length > 0 && typeof parsedContent[0] === 'object') {
+                    const keys = Object.keys(parsedContent[0]);
+                    if (keys.length > 0) {
+                        const xAxisKey = keys[0];
+                        const dataKeys = keys.slice(1);
+                        const normalizedData = parsedContent.map((item: any) => ({
+                            ...item,
+                            name: String(item[xAxisKey]),
+                        }));
+
+                        return { data: normalizedData, dataKeys };
+                    }
+                }
+            } catch (e) {
+                return null;
+            }
+            return null;
+        }, [content]);
+
+        if (!chartConfig)
+            return <InteractiveCodeBlock content={content} language="json" handleCopyClick={handleCopyClick} />;
+
+        return <DataVisualizer data={chartConfig.data} dataKeys={chartConfig.dataKeys} />;
+    },
+);
+
+ChartBlockWrapper.displayName = 'ChartBlockWrapper';
+
 const Message = ({ user, message, loading }: IMessageProps) => {
     const fullText = useMemo(() => {
         return message?.parts?.map((p) => p.text).join('\n') || '';
@@ -151,6 +189,7 @@ const Message = ({ user, message, loading }: IMessageProps) => {
                             {message?.attachment && (
                                 <div className="message-attachment-container">
                                     {message.attachment.type === MediaType.IMAGE ? (
+                                        /* eslint-disable-next-line @next/next/no-img-element */
                                         <img
                                             src={message.attachment.url}
                                             alt={message.attachment.name || 'Uploaded image'}
@@ -205,41 +244,41 @@ const Message = ({ user, message, loading }: IMessageProps) => {
     );
 };
 
-const getMarkdownComponents = (handleCopyClick: (content: string) => void): Components => ({
+export const getMarkdownComponents = (handleCopyClick: (content: string) => void): Components => ({
     code({ node, inline, className, children, ...props }: any) {
-        const match = /language-(\w+)/.exec(className || '');
+        if (inline)
+            return (
+                <code className={className} {...props}>
+                    {children}
+                </code>
+            );
+
+        const match = /language-([\w-]+)/.exec(className || '');
+        const language = match ? match[1] : '';
         const content = String(children).replace(/\n$/, '');
 
-        return !inline && match ? (
-            <div className="code-block">
-                <div className="code-block-header">
-                    <div>
-                        <span>{match[1]}</span>
+        switch (language) {
+            case 'error':
+                return (
+                    <div className="response-error" style={{ marginTop: '0.5rem' }}>
+                        <MdErrorOutline />
+                        <span style={{ fontFamily: 'system-ui' }}>{content}</span>
                     </div>
-                    <button className="copy-button" onClick={() => handleCopyClick(content)}>
-                        <LuCopy />
-                    </button>
-                </div>
-                <SyntaxHighlighter
-                    style={atomOneDark}
-                    language={match[1]}
-                    PreTag="div"
-                    lineNumberStyle={{
-                        minWidth: '2rem',
-                        paddingRight: '1rem',
-                        userSelect: 'none',
-                    }}
-                    customStyle={{ padding: '1rem' }}
-                    {...props}
-                >
-                    {content}
-                </SyntaxHighlighter>
-            </div>
-        ) : (
-            <code className={className} {...props}>
-                {children}
-            </code>
-        );
+                );
+
+            case 'aether-chart':
+                return <ChartBlockWrapper content={content} handleCopyClick={handleCopyClick} />;
+
+            case '':
+                return (
+                    <code className={className} {...props}>
+                        {content}
+                    </code>
+                );
+
+            default:
+                return <InteractiveCodeBlock content={content} language={language} handleCopyClick={handleCopyClick} />;
+        }
     },
 });
 
