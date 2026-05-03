@@ -3,7 +3,7 @@ import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
 import { authOptions } from '../auth/[...nextauth]/options';
 import { getServerSession } from 'next-auth';
-import { interactionService } from '@/services/interactionService';
+import { interactionService } from '@/services/server/interactionService';
 import { IFetchMessagesResponse } from '@/types/chat';
 
 export const GET = apiHandler(async (request: NextRequest) => {

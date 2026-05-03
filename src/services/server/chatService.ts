@@ -1,7 +1,7 @@
 import Chat from '@/models/chatModel';
 import Interaction from '@/models/interactionModel';
 import { multiTurnConversationStream, generateTextFromFileAndPromptStream } from '@/utils/GeminiUtils';
-import { fileService } from '@/services/fileService';
+import { fileService } from '@/services/server/fileService';
 import { v4 as uuidv4 } from 'uuid';
 import { Content } from '@google/genai';
 import { ChatRole, MediaType } from '@/types/chat';

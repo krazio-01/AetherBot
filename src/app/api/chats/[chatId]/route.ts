@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/options';
 import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
-import { deleteUserChat } from '@/services/chatService';
+import { deleteUserChat } from '@/services/server/chatService';
 
 export const DELETE = apiHandler(async (request: NextRequest, { params }: { params: { chatId: string } }) => {
     const [session, _] = await Promise.all([getServerSession(authOptions), connectToDB()]);

@@ -4,7 +4,7 @@ import { authOptions } from '../auth/[...nextauth]/options';
 import { getServerSession } from 'next-auth';
 import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
-import { createChatInteraction, getUserChats } from '@/services/chatService';
+import { createChatInteraction, getUserChats } from '@/services/server/chatService';
 import { IChatResponse, MediaType } from '@/types/chat';
 import { buildInteractionStream } from '@/utils/streamUtils';
 

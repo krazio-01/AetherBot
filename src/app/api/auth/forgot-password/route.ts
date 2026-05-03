@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
-import { initiatePasswordReset } from '@/services/authService';
+import { initiatePasswordReset } from '@/services/server/authService';
 
 interface IForgotPasswordBody {
     email?: string;

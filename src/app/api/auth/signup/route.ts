@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
-import { registerUser, ISignupPayload } from '@/services/authService';
+import { registerUser, ISignupPayload } from '@/services/server/authService';
 
 export const POST = apiHandler(async (request: NextRequest) => {
     const body: ISignupPayload = await request.json();

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
-import { executePasswordReset } from '@/services/authService';
+import { executePasswordReset } from '@/services/server/authService';
 
 interface IResetPasswordBody {
     token?: string;

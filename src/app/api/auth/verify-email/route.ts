@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
-import { verifyUserEmail } from '@/services/authService';
+import { verifyUserEmail } from '@/services/server/authService';
 
 export const POST = apiHandler(async (request: NextRequest) => {
     const body: { token?: string } = await request.json();
