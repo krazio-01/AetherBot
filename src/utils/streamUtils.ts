@@ -1,4 +1,4 @@
-import { finalizeInteraction } from '@/services/chatService';
+import { finalizeInteraction } from '@/services/server/chatService';
 import { FALLBACK_ERRORS, GENERAL_ERRORS } from '@/types/gemini';
 import { getFriendlyErrorMessage } from '@/utils/GeminiUtils';
 
