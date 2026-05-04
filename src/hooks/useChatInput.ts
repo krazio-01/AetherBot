@@ -4,9 +4,7 @@ import { ChatRole, MediaType } from '@/types/chat';
 import { IMessage } from '@/types';
 import { IUploadState } from './useFileUpload';
 import { GENERAL_ERRORS } from '@/types/gemini';
-
-const TYPING_BASE_SPEED = 250;
-const TYPING_BACKLOG_DIVISOR = 44;
+import { streamingService } from '@/services/client/streamingService';
 
 const createChatMessage = (
     role: ChatRole,
@@ -105,73 +103,6 @@ const useTextareaAutoResize = () => {
     return { textareaRef, adjustTextareaHeight };
 };
 
-const useTypingSimulator = () => {
-    const editMessage = useAppStore((state) => state.editMessage);
-    const networkTextRef = useRef('');
-    const uiTextRef = useRef('');
-    const streamDoneRef = useRef(false);
-    const animationFrameRef = useRef<number | null>(null);
-
-    const stopAnimation = useCallback(() => {
-        if (animationFrameRef.current !== null) {
-            cancelAnimationFrame(animationFrameRef.current);
-            animationFrameRef.current = null;
-        }
-    }, []);
-
-    const resetSimulator = useCallback(() => {
-        stopAnimation();
-        networkTextRef.current = '';
-        uiTextRef.current = '';
-        streamDoneRef.current = false;
-    }, [stopAnimation]);
-
-    const startTypingAnimation = useCallback(
-        (modelMessageId: string, activeChatIdOnStart: string | undefined) => {
-            let lastDrawTime = performance.now();
-            let fractionalChars = 0;
-
-            const tick = (now: number) => {
-                if (useAppStore.getState().currentChatId !== activeChatIdOnStart) {
-                    animationFrameRef.current = null;
-                    return;
-                }
-
-                const networkText = networkTextRef.current;
-                let uiText = uiTextRef.current;
-                const dt = now - lastDrawTime;
-                lastDrawTime = now;
-
-                if (uiText.length < networkText.length) {
-                    const remaining = networkText.length - uiText.length;
-                    const speedMul = Math.max(1, remaining / TYPING_BACKLOG_DIVISOR);
-                    fractionalChars += (TYPING_BASE_SPEED * speedMul * dt) / 1000;
-                    const charsToAdd = Math.min(Math.floor(fractionalChars), remaining);
-
-                    if (charsToAdd > 0) {
-                        uiText = networkText.slice(0, uiText.length + charsToAdd);
-                        fractionalChars -= charsToAdd;
-                        uiTextRef.current = uiText;
-                        editMessage(modelMessageId, { parts: [{ text: uiText }], isStreaming: true });
-                    }
-                } else if (streamDoneRef.current) {
-                    editMessage(modelMessageId, { parts: [{ text: uiText }], isStreaming: false });
-                    animationFrameRef.current = null;
-                    return;
-                }
-                animationFrameRef.current = requestAnimationFrame(tick);
-            };
-
-            animationFrameRef.current = requestAnimationFrame(tick);
-        },
-        [editMessage],
-    );
-
-    useEffect(() => stopAnimation, [stopAnimation]);
-
-    return { startTypingAnimation, resetSimulator, stopAnimation, networkTextRef, uiTextRef, streamDoneRef };
-};
-
 export const useChatSubmit = (
     chatId: string | undefined,
     isAuthenticated: boolean,
@@ -188,10 +119,7 @@ export const useChatSubmit = (
 
     const [isGenerating, setIsGenerating] = useState(false);
     const { textareaRef, adjustTextareaHeight } = useTextareaAutoResize();
-    const simulator = useTypingSimulator();
-
     const abortControllerRef = useRef<AbortController | null>(null);
-
     const latestDeps = useRef({ uploadState, resetUploadState, chatId, isAuthenticated });
     latestDeps.current = { uploadState, resetUploadState, chatId, isAuthenticated };
 
@@ -205,11 +133,11 @@ export const useChatSubmit = (
 
     const handleStreamError = useCallback(
         (error: any, modelMessageId: string, activeChatIdOnStart: string | undefined) => {
-            simulator.stopAnimation();
-
             if (useAppStore.getState().currentChatId !== activeChatIdOnStart) return;
 
-            const uiText = simulator.uiTextRef.current;
+            const uiText = streamingService.getDisplayedText(modelMessageId);
+            streamingService.stopStream(modelMessageId);
+
             const hasModelMessage = useAppStore.getState().messages.some((m) => m.client_id === modelMessageId);
 
             if (error?.name === 'AbortError') {
@@ -231,7 +159,7 @@ export const useChatSubmit = (
                 updateMessages(createChatMessage(ChatRole.MODEL, errorMessage, undefined, true, modelMessageId, false));
             }
         },
-        [editMessage, updateMessages, simulator],
+        [editMessage, updateMessages],
     );
 
     const updateChat = useCallback(
@@ -243,9 +171,6 @@ export const useChatSubmit = (
             abortControllerRef.current = new AbortController();
             const { signal } = abortControllerRef.current;
             const deps = latestDeps.current;
-
-            simulator.resetSimulator();
-
             let activeChatId = currentChatId;
 
             try {
@@ -256,11 +181,8 @@ export const useChatSubmit = (
                 adjustTextareaHeight(true);
 
                 const formData = buildFormData(
-                    currentChatId,
-                    currentInput,
-                    deps.isAuthenticated,
-                    useAppStore.getState().messages,
-                    deps.uploadState,
+                    currentChatId, currentInput, deps.isAuthenticated,
+                    useAppStore.getState().messages, deps.uploadState
                 );
 
                 const response = await fetch('/api/chats', { method: 'POST', body: formData, signal });
@@ -272,7 +194,6 @@ export const useChatSubmit = (
                 if (!response.body) throw new Error('ReadableStream not supported in this browser.');
 
                 const headerReferenceId = response.headers.get('x-reference-id');
-
                 activeChatId = headerReferenceId || currentChatId;
 
                 if (!currentChatId && headerReferenceId)
@@ -282,18 +203,15 @@ export const useChatSubmit = (
                 updateMessages(createChatMessage(ChatRole.MODEL, '', undefined, false, modelMessageId, true));
                 setLoading(false);
 
-                simulator.startTypingAnimation(modelMessageId, activeChatId);
-
                 await processStream(
                     response.body.getReader(),
-                    (txt) => {
-                        simulator.networkTextRef.current = txt;
-                    },
+                    (txt) => streamingService.queueIncomingText(modelMessageId, txt),
                     signal,
                 );
 
-                simulator.streamDoneRef.current = true;
+                streamingService.markStreamDone(modelMessageId);
                 return activeChatId;
+
             } catch (error: any) {
                 console.error('Stream error:', error);
                 handleStreamError(error, modelMessageId, activeChatId);
@@ -304,7 +222,7 @@ export const useChatSubmit = (
                 abortControllerRef.current = null;
             }
         },
-        [updateMessages, setInput, setLoading, setCurrentChatId, adjustTextareaHeight, simulator, handleStreamError],
+        [updateMessages, setInput, setLoading, setCurrentChatId, adjustTextareaHeight, handleStreamError],
     );
 
     const handleSubmit = useCallback(
