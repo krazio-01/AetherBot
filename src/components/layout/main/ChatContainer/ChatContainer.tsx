@@ -1,12 +1,12 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import useAppStore from '@/store/store';
 import Message from '@/components/layout/main/message/Message';
 import DefaultItems from '@/components/layout/main/defaultItems/DefaultItems';
 import { Oval } from 'react-loader-spinner';
 import './chatContainer.css';
 
-interface ChatContainerProps {
+interface IChatContainerProps {
     user: any;
     isPending?: boolean;
     chatId?: string;
@@ -18,36 +18,49 @@ const LoadingState = () => (
     </div>
 );
 
-export default function ChatContainer({ user, isPending = true, chatId }: ChatContainerProps) {
+export default function ChatContainer({ user, isPending = true, chatId }: IChatContainerProps) {
     const messages = useAppStore((state) => state.messages);
     const loading = useAppStore((state) => state.loading);
     const currentChatId = useAppStore((state) => state.currentChatId);
+    const editMessage = useAppStore((state) => state.editMessage);
 
-    const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isScrolledUp = useRef(false);
-    const prevMessageCount = useRef(0);
+    const isAutoScrolling = useRef(false);
 
     const handleScroll = () => {
-        if (!scrollContainerRef.current) return;
-        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-        const distanceToBottom = scrollHeight - scrollTop - clientHeight;
-        isScrolledUp.current = distanceToBottom > 50;
+        const container = scrollContainerRef.current;
+        if (!container || isAutoScrolling.current) return;
+
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        isScrolledUp.current = scrollHeight - scrollTop - clientHeight > 100;
     };
 
+    const scrollToBottom = useCallback((behavior: 'auto' | 'smooth' = 'auto') => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        isAutoScrolling.current = true;
+
+        requestAnimationFrame(() => {
+            if (behavior === 'smooth') container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            else container.scrollTop = container.scrollHeight;
+
+            setTimeout(() => {
+                isAutoScrolling.current = false;
+            }, 50);
+        });
+    }, []);
+
     useEffect(() => {
-        const isNewMessage = messages.length > prevMessageCount.current;
-        prevMessageCount.current = messages.length;
+        if (!isScrolledUp.current) scrollToBottom(messages.length > 0 ? 'smooth' : 'auto');
+    }, [messages.length, scrollToBottom]);
 
-        if (isNewMessage || !isScrolledUp.current) {
-            messagesEndRef.current?.scrollIntoView({ behavior: isNewMessage ? 'smooth' : 'auto' });
-            isScrolledUp.current = false;
-        }
-    }, [messages]);
+    const handleStreamUpdate = useCallback(() => {
+        if (!isScrolledUp.current) scrollToBottom('auto');
+    }, [scrollToBottom]);
 
-    if (isPending) {
-        return <LoadingState />;
-    }
+    if (isPending) return <LoadingState />;
 
     if (messages.length === 0) {
         if (chatId) {
@@ -68,15 +81,19 @@ export default function ChatContainer({ user, isPending = true, chatId }: ChatCo
     return (
         <div className="result-box" ref={scrollContainerRef} onScroll={handleScroll}>
             <div className="boxi">
-                {messages.map((message, index) => (
-                    <Message
+                {messages.map((message, index) => {
+                    const isLastMessage = index === messages.length - 1;
+
+                    return <Message
                         key={message.client_id}
                         user={user}
                         message={message}
-                        loading={loading && index === messages.length - 1}
+                        loading={loading}
+                        isLastMessage={isLastMessage}
+                        onStreamUpdate={handleStreamUpdate}
+                        editMessage={editMessage}
                     />
-                ))}
-                <div ref={messagesEndRef} />
+                })}
             </div>
         </div>
     );
