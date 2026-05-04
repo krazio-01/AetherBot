@@ -12,6 +12,12 @@ interface ChatContainerProps {
     chatId?: string;
 }
 
+const LoadingState = () => (
+    <div className="loader">
+        <Oval visible={true} height="50" width="50" color="#7081fd" secondaryColor="#7081fd" />
+    </div>
+);
+
 export default function ChatContainer({ user, isPending = true, chatId }: ChatContainerProps) {
     const messages = useAppStore((state) => state.messages);
     const loading = useAppStore((state) => state.loading);
@@ -40,36 +46,13 @@ export default function ChatContainer({ user, isPending = true, chatId }: ChatCo
     }, [messages]);
 
     if (isPending) {
-        return (
-            <div className="loader">
-                <Oval
-                    visible={true}
-                    height="50"
-                    width="50"
-                    color="#7081fd"
-                    secondaryColor="#7081fd"
-                    ariaLabel="oval-loading"
-                />
-            </div>
-        );
+        return <LoadingState />;
     }
 
     if (messages.length === 0) {
         if (chatId) {
             if (currentChatId === null) return null;
-            else if (currentChatId !== chatId)
-                return (
-                    <div className="loader">
-                        <Oval
-                            visible={true}
-                            height="50"
-                            width="50"
-                            color="#7081fd"
-                            secondaryColor="#7081fd"
-                            ariaLabel="oval-loading"
-                        />
-                    </div>
-                );
+            if (currentChatId !== chatId) return <LoadingState />;
         }
 
         return (
