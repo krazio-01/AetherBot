@@ -16,12 +16,16 @@ import PdfBadge from '@/components/Ui/PdfBadge/PdfBadge';
 import remarkGfm from 'remark-gfm';
 import DataVisualizer from '@/components/InteractiveWidgets/DataVisualizer';
 import InteractiveCodeBlock from '@/components/InteractiveWidgets/InteractiveCodeBlock';
+import { streamingService } from '@/services/client/streamingService';
 import './message.css';
 
 interface IMessageProps {
     user?: ISessionUser | null;
     message: IMessage;
     loading?: boolean;
+    isLastMessage?: boolean;
+    onStreamUpdate?: () => void;
+    editMessage: (id: string, data: Partial<IMessage>) => void;
 }
 
 interface IMarkDownBlockProps {
@@ -102,7 +106,15 @@ const CollapsibleText = ({ text }: { text: string }) => {
 };
 
 const ChartBlockWrapper = memo(
-    ({ content, handleCopyClick, isStreaming }: { content: string; handleCopyClick: (content: string) => void, isStreaming: boolean }) => {
+    ({
+        content,
+        handleCopyClick,
+        isStreaming,
+    }: {
+        content: string;
+        handleCopyClick: (content: string) => void;
+        isStreaming: boolean;
+    }) => {
         const chartConfig = useMemo(() => {
             const trimmedContent = content.trim();
 
@@ -131,7 +143,14 @@ const ChartBlockWrapper = memo(
         }, [content]);
 
         if (!chartConfig)
-            return <InteractiveCodeBlock content={content} language="json" handleCopyClick={handleCopyClick} isStreaming={isStreaming} />;
+            return (
+                <InteractiveCodeBlock
+                    content={content}
+                    language="json"
+                    handleCopyClick={handleCopyClick}
+                    isStreaming={isStreaming}
+                />
+            );
 
         return <DataVisualizer data={chartConfig.data} dataKeys={chartConfig.dataKeys} />;
     },
@@ -139,10 +158,28 @@ const ChartBlockWrapper = memo(
 
 ChartBlockWrapper.displayName = 'ChartBlockWrapper';
 
-const Message = ({ user, message, loading }: IMessageProps) => {
+const Message = ({ user, message, loading, isLastMessage, onStreamUpdate, editMessage }: IMessageProps) => {
+    const [localText, setLocalText] = useState(() => message?.parts?.map((p) => p.text).join('\n') || '');
+
     const fullText = useMemo(() => {
         return message?.parts?.map((p) => p.text).join('\n') || '';
     }, [message?.parts]);
+
+    useEffect(() => {
+        if (!message.isStreaming) {
+            setLocalText(fullText);
+            return;
+        }
+
+        const unsubscribe = streamingService.subscribe(message.client_id, (newText, isDone) => {
+            setLocalText(newText);
+
+            if (isLastMessage && onStreamUpdate) onStreamUpdate();
+            if (isDone) editMessage(message.client_id, { parts: [{ text: newText }], isStreaming: false });
+        });
+
+        return () => unsubscribe();
+    }, [message.client_id, message.isStreaming, fullText, isLastMessage, onStreamUpdate, editMessage]);
 
     const handleCopyClick = useCallback((content: string) => {
         clipboardCopy(content);
@@ -150,19 +187,19 @@ const Message = ({ user, message, loading }: IMessageProps) => {
     }, []);
 
     const handleCopyFullMessage = useCallback(() => {
-        clipboardCopy(fullText);
+        clipboardCopy(localText);
         toast('Response copied to clipboard!');
-    }, [fullText]);
+    }, [localText]);
 
     const handleDownload = useCallback(() => {
-        const blob = new Blob([fullText], { type: 'text/markdown' });
+        const blob = new Blob([localText], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = 'aetherbot-response.md';
         a.click();
         URL.revokeObjectURL(url);
-    }, [fullText]);
+    }, [localText]);
 
     return (
         <>
@@ -204,15 +241,12 @@ const Message = ({ user, message, loading }: IMessageProps) => {
                                 </div>
                             )}
 
-                            {message.parts.map((part, index) => (
-                                <MarkDownBlock
-                                    key={index}
-                                    part={part}
-                                    handleCopyClick={handleCopyClick}
-                                    role={message.role}
-                                    message={message}
-                                />
-                            ))}
+                            <MarkDownBlock
+                                part={{ text: message.isStreaming ? localText : fullText }}
+                                handleCopyClick={handleCopyClick}
+                                role={message.role}
+                                message={message}
+                            />
                         </>
                     )}
 
@@ -221,7 +255,7 @@ const Message = ({ user, message, loading }: IMessageProps) => {
                             <button onClick={handleCopyFullMessage} title="Copy response">
                                 <LuCopy />
                             </button>
-                            <PlayAudioButton text={cleanTextForSpeech(fullText)} />
+                            <PlayAudioButton text={cleanTextForSpeech(message.isStreaming ? localText : fullText)} />
                             <button onClick={handleDownload} title="Download response">
                                 <LuDownload />
                             </button>
@@ -274,7 +308,9 @@ export const getMarkdownComponents = (
                 );
 
             case 'aether-chart':
-                return <ChartBlockWrapper content={content} handleCopyClick={handleCopyClick} isStreaming={isStreaming} />;
+                return (
+                    <ChartBlockWrapper content={content} handleCopyClick={handleCopyClick} isStreaming={isStreaming} />
+                );
 
             case '':
                 return (
