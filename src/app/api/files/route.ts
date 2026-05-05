@@ -2,8 +2,13 @@ import { NextRequest } from 'next/server';
 import { ResponseWrapper, ErrorWrapper } from '@/lib/ResponseWrapper';
 import { apiHandler } from '@/lib/apiHandler';
 import { fileService } from '@/services/server/fileService';
+import { authOptions } from '../auth/[...nextauth]/options';
+import { getServerSession } from 'next-auth';
 
 export const POST = apiHandler(async (request: NextRequest) => {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?._id) throw new ErrorWrapper(401, 'Unauthorized');
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
@@ -17,6 +22,9 @@ export const POST = apiHandler(async (request: NextRequest) => {
 });
 
 export const DELETE = apiHandler(async (request: NextRequest) => {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?._id) throw new ErrorWrapper(401, 'Unauthorized');
+
     const { searchParams } = request.nextUrl;
     const fileUrl = searchParams.get('url');
 
