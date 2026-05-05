@@ -5,7 +5,6 @@ import { getFriendlyErrorMessage } from '@/utils/GeminiUtils';
 interface IStreamChunk {
     text?: string;
     candidates?: Array<{ finishReason?: string }>;
-    [key: string]: any;
 }
 
 const ENCODER = new TextEncoder();
