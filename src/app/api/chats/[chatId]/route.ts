@@ -7,13 +7,15 @@ import { apiHandler } from '@/lib/apiHandler';
 import { deleteUserChat } from '@/services/server/chatService';
 
 export const DELETE = apiHandler(async (request: NextRequest, { params }: { params: { chatId: string } }) => {
-    const [session, _] = await Promise.all([getServerSession(authOptions), connectToDB()]);
+    const session = await getServerSession(authOptions);
     const userId = session?.user?._id;
 
     if (!userId) throw new ErrorWrapper(401, 'Unauthorized');
 
     const { chatId } = params;
     if (!chatId) throw new ErrorWrapper(400, 'Chat ID is required');
+
+    await connectToDB();
 
     try {
         await deleteUserChat(chatId, userId);
