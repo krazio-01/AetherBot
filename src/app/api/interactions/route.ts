@@ -13,7 +13,7 @@ export const GET = apiHandler(async (request: NextRequest) => {
     const { searchParams } = request.nextUrl;
     const chatId = searchParams.get('chatId');
 
-    const formattedMessages = await interactionService.getInteractionsByChatId(chatId as string);
+    const formattedMessages = await interactionService.getInteractionsByChatId(chatId);
 
     return ResponseWrapper.successWithData<IFetchMessagesResponse>({ messages: formattedMessages });
 });
