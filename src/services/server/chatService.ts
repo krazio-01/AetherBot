@@ -1,5 +1,5 @@
 import Chat from '@/models/chatModel';
-import Interaction from '@/models/interactionModel';
+import Interaction, { IInteraction } from '@/models/interactionModel';
 import { multiTurnConversationStream, generateTextFromFileAndPromptStream } from '@/utils/GeminiUtils';
 import { fileService } from '@/services/server/fileService';
 import { v4 as uuidv4 } from 'uuid';
@@ -127,26 +127,29 @@ export async function getUserChats(userId: string): Promise<IChat[]> {
 }
 
 export async function deleteUserChat(chatId: string, userId: string): Promise<void> {
-    const chat = await Chat.findOne({ referenceId: chatId, userId: userId });
-
+    const chat = await Chat.findOne({ referenceId: chatId, userId });
     if (!chat) throw new Error('Chat not found');
 
     const interactionsWithFiles = await Interaction.find({
-        chatId: chatId,
+        chatId,
         'userMessage.attachment.url': { $exists: true },
-    }).lean();
+    }).lean<IInteraction[]>();
 
-    const fileUrls = interactionsWithFiles.map((interaction: any) => interaction.userMessage.attachment.url);
+    const fileUrls = interactionsWithFiles
+        .map((i) => i.userMessage.attachment?.url)
+        .filter((url): url is string => !!url);
 
-    const deleteFilePromises = fileUrls.map((url: string) => {
-        return fileService.deleteFileByUrl(url).catch((err) => {
-            console.error(`Failed to delete file ${url} from Cloudinary:`, err);
-        });
+    const deleteFilePromises = fileUrls.map(async (url) => {
+        try {
+            await fileService.deleteFileByUrl(url);
+        } catch (err) {
+            console.error(`Failed to delete file ${url}:`, err);
+        }
     });
 
     await Promise.all([
         ...deleteFilePromises,
         Chat.deleteOne({ referenceId: chatId }),
-        Interaction.deleteMany({ chatId: chatId }),
+        Interaction.deleteMany({ chatId }),
     ]);
 }
