@@ -39,24 +39,15 @@ export const authOptions: NextAuthOptions = {
 
                 await connectToDB();
 
-                const user = await User.findOne({
-                    email: credentials.identifier,
-                });
-
+                const user = await User.findOne({ email: credentials.identifier });
                 if (!user) throw new Error('This account is not registered');
 
                 if (!user.isVerified) throw new Error('Please verify your email');
 
-                if (!user.password) {
-                    const salt = await bcrypt.genSalt(10);
-                    const hashedPassword = await bcrypt.hash(credentials.password, salt);
-                    user.password = hashedPassword;
+                if (!user.password) throw new Error("You used a social login. Use 'Forgot Password' to set one.");
 
-                    await user.save();
-                } else {
-                    const checkPassword = await bcrypt.compare(credentials.password, user.password);
-                    if (!checkPassword) throw new Error('Invalid credentials');
-                }
+                const checkPassword = await bcrypt.compare(credentials.password, user.password);
+                if (!checkPassword) throw new Error('Invalid credentials');
 
                 return {
                     id: user._id.toString(),
