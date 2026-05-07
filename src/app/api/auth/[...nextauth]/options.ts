@@ -36,14 +36,15 @@ export const authOptions: NextAuthOptions = {
                 await connectToDB();
 
                 const user = await User.findOne({ email: credentials.identifier });
-                if (!user) throw new Error('This account is not registered');
+
+                if (!user) throw new Error('Invalid email or password');
 
                 if (!user.isVerified) throw new Error('Please verify your email');
 
                 if (!user.password) throw new Error("You used a social login. Use 'Forgot Password' to set one.");
-
                 const checkPassword = await bcrypt.compare(credentials.password, user.password);
-                if (!checkPassword) throw new Error('Invalid credentials');
+
+                if (!checkPassword) throw new Error('Invalid email or password');
 
                 return {
                     id: user._id.toString(),
