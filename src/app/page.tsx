@@ -37,7 +37,7 @@ export default function Home() {
             <section className="features-section">
                 <div className="features-header">
                     <h2 className="section-title">Current Features</h2>
-                    <p className="section-subtitle">A transparent look at what's under the hood right now.</p>
+                    <p className="section-subtitle">A transparent look at what&apos;s under the hood right now.</p>
                 </div>
 
                 <div className="features-grid">
