@@ -2,7 +2,14 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Header from '@/components/layout/header/Header';
 import AetherHologram from '@/components/Ui/AetherHologram/AetherHologram';
-import { IoChatbubblesOutline, IoImageOutline, IoCloudUploadOutline, IoConstructOutline } from 'react-icons/io5';
+import {
+    IoFlashOutline,
+    IoDocumentAttachOutline,
+    IoVolumeMediumOutline,
+    IoColorPaletteOutline,
+    IoTerminalOutline,
+    IoShieldCheckmarkOutline,
+} from 'react-icons/io5';
 import TryButton from '@/components/Ui/TryBtn/TryButton';
 import './index.css';
 
@@ -14,13 +21,13 @@ export default function Home() {
             <section className="home-hero-section">
                 <div className="content-section">
                     <h1 className="hero-title">
-                        Chat with <span className="gradient-text">AetherBot</span>
+                        Meet <span className="gradient-text">AetherBot</span>
                     </h1>
 
                     <div className="info-wrapper">
                         <p className="hero-subtitle">
-                            A smart conversational assistant. Have natural, continuous chats and upload images for
-                            instant visual analysis.
+                            Your intelligent, real-time AI companion. Analyze PDFs, execute code on the fly, listen to
+                            voice responses, and visualize data instantly.
                         </p>
 
                         <div className="action-wrapper">
@@ -36,52 +43,93 @@ export default function Home() {
 
             <section className="features-section">
                 <div className="features-header">
-                    <h2 className="section-title">Current Features</h2>
-                    <p className="section-subtitle">A transparent look at what&apos;s under the hood right now.</p>
+                    <h2 className="section-title">Built for users. Engineered for scale.</h2>
+                    <p className="section-subtitle">
+                        A seamless chat experience backed by serious technical infrastructure.
+                    </p>
                 </div>
 
                 <div className="features-grid">
                     <div className="feature-card">
                         <div className="icon-wrapper">
-                            <IoChatbubblesOutline />
+                            <IoFlashOutline />
                         </div>
-                        <h3>Multi-Turn Context</h3>
+                        <h3>Lightning-Fast Chat</h3>
                         <p>
-                            Maintains conversation history to allow for natural, continuous dialogue using standard
-                            context window management.
+                            <strong>For you:</strong> No waiting. Watch the AI type its responses in real-time.
+                            <br />
+                            <strong>Under the hood:</strong> Custom React state architecture manages high-frequency text
+                            streaming without triggering expensive browser re-renders.
                         </p>
                     </div>
 
                     <div className="feature-card">
                         <div className="icon-wrapper">
-                            <IoImageOutline />
+                            <IoDocumentAttachOutline />
                         </div>
-                        <h3>Image Analysis</h3>
+                        <h3>Multimodal Analysis</h3>
                         <p>
-                            Upload an image and the Gemini 2.5 Flash vision model will analyze it and respond based on
-                            the visual context.
+                            <strong>For you:</strong> Upload complex images, invoices, or multi-page PDFs and get
+                            instant answers.
+                            <br />
+                            <strong>Under the hood:</strong> Securely processes document blobs and visual assets via
+                            Cloudinary, integrated directly with Gemini&apos;s vision engine.
                         </p>
                     </div>
 
                     <div className="feature-card">
                         <div className="icon-wrapper">
-                            <IoCloudUploadOutline />
+                            <IoTerminalOutline />
                         </div>
-                        <h3>Cloudinary Integration</h3>
+                        <h3>Live Code Environment</h3>
                         <p>
-                            For authenticated users, uploaded images are securely processed and hosted via Cloudinary
-                            for persistent access.
+                            <strong>For you:</strong> Don&apos;t just read code—run it. View interactive UI components or
+                            execute backend scripts right in the chat.
+                            <br />
+                            <strong>Under the hood:</strong> Integrates Sandpack for live frontend React rendering and
+                            the JDoodle API for secure, containerized backend code execution.
                         </p>
                     </div>
 
                     <div className="feature-card">
                         <div className="icon-wrapper">
-                            <IoConstructOutline />
+                            <IoColorPaletteOutline />
                         </div>
-                        <h3>Active Roadmap</h3>
+                        <h3>Interactive Visuals</h3>
                         <p>
-                            Currently researching and developing integrations for native AI image and video generation
-                            features.
+                            <strong>For you:</strong> Plain text is boring. Get beautifully formatted syntax and live
+                            data charts.
+                            <br />
+                            <strong>Under the hood:</strong> A dynamic UI layer that parses Markdown, highlights syntax,
+                            and renders interactive Recharts data visualizations on the fly.
+                        </p>
+                    </div>
+
+                    <div className="feature-card">
+                        <div className="icon-wrapper">
+                            <IoVolumeMediumOutline />
+                        </div>
+                        <h3>Text-to-Speech Voice</h3>
+                        <p>
+                            <strong>For you:</strong> Give your eyes a rest. Click play and listen to the AI&apos;s responses
+                            in a natural voice.
+                            <br />
+                            <strong>Under the hood:</strong> Dynamically converts streamed markdown responses into
+                            seamless audio playback using advanced TTS browser APIs.
+                        </p>
+                    </div>
+
+                    <div className="feature-card">
+                        <div className="icon-wrapper">
+                            <IoShieldCheckmarkOutline />
+                        </div>
+                        <h3>Secure & Private</h3>
+                        <p>
+                            <strong>For you:</strong> Your data is safe. Jump in as a guest or securely link your social
+                            accounts.
+                            <br />
+                            <strong>Under the hood:</strong> Protected by NextAuth with stateless JWT session management
+                            and anti-enumeration security protocols.
                         </p>
                     </div>
                 </div>
@@ -89,8 +137,11 @@ export default function Home() {
 
             <section className="bottom-cta-section">
                 <div className="cta-container">
-                    <h2>Want to test the integration?</h2>
-                    <p>Try it out as a guest or create an account to test the Cloudinary image uploads.</p>
+                    <h2>Ready to test the architecture?</h2>
+                    <p>
+                        Try it out locally as a guest, or create a free account to unlock document uploads and live code
+                        execution.
+                    </p>
                     <Link className="try-link-large" href={'/login'}>
                         Create Free Account
                     </Link>
@@ -121,8 +172,8 @@ export default function Home() {
 
 export function generateMetadata(): Metadata {
     return {
-        title: 'AetherBot - Your AI Conversational Workspace',
+        title: 'AetherBot | Intelligent AI Workspace',
         description:
-            'Chat naturally with full context memory, upload complex images, and get instant visual analysis to speed up your workflow.',
+            'A seamless AI assistant featuring real-time streaming, PDF analysis, live code execution, and dynamic data visualization.',
     };
 }
