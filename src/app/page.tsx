@@ -13,6 +13,60 @@ import {
 import TryButton from '@/components/Ui/TryBtn/TryButton';
 import './index.css';
 
+const features = [
+    {
+        id: 'chat',
+        class: 'bento-wide',
+        icon: IoFlashOutline,
+        title: 'Lightning-Fast Chat',
+        experience: "Get answers instantly. The AI streams responses back to you in real-time, so you're never left staring at a loading spinner.",
+        architecture:
+            'Built with a custom local-state solution to handle high-frequency text streams smoothly, entirely bypassing expensive React re-renders.',
+    },
+    {
+        id: 'voice',
+        class: 'bento-narrow',
+        icon: IoVolumeMediumOutline,
+        title: 'Voice Synthesis',
+        experience: 'Tired of reading long responses? Just hit play and let the AI read it back to you naturally.',
+        architecture: 'Uses modern Web TTS APIs to instantly parse and convert Markdown text streams into clean audio playback.',
+    },
+    {
+        id: 'vision',
+        class: 'bento-narrow',
+        icon: IoDocumentAttachOutline,
+        title: 'Multimodal Vision',
+        experience: 'Drop in a screenshot, PDF, or receipt, and ask questions about it just like you would with a colleague.',
+        architecture: "Securely handles file blobs and uploads via Cloudinary, piping the visual data directly into Gemini's multimodal engine.",
+    },
+    {
+        id: 'code',
+        class: 'bento-wide',
+        icon: IoTerminalOutline,
+        title: 'Live Code Environment',
+        experience: 'Why copy-paste? You can actually run the backend scripts or preview UI components right here in the chatbox.',
+        architecture:
+            'Leverages Sandpack for live React component rendering and JDoodle\'s isolated containers for secure backend execution.',
+    },
+    {
+        id: 'visuals',
+        class: 'bento-half',
+        icon: IoColorPaletteOutline,
+        title: 'Interactive Visuals',
+        experience: "Information shouldn't just be a wall of text. See your data brought to life with clean, interactive charts.",
+        architecture:
+            'A custom UI layer intercepts incoming markdown on the fly to render beautiful, interactive Recharts visualizations.',
+    },
+    {
+        id: 'security',
+        class: 'bento-half',
+        icon: IoShieldCheckmarkOutline,
+        title: 'Secure & Private',
+        experience: 'Try it out hassle-free as a guest, or safely log in with your GitHub or Discord account to save your history.',
+        architecture: 'Locked down with NextAuth. Uses stateless JWTs and strict account-linking rules to prevent enumeration and takeovers.',
+    },
+];
+
 export default function Home() {
     return (
         <main className="home-main">
@@ -49,89 +103,27 @@ export default function Home() {
                     </p>
                 </div>
 
-                <div className="features-grid">
-                    <div className="feature-card">
-                        <div className="icon-wrapper">
-                            <IoFlashOutline />
-                        </div>
-                        <h3>Lightning-Fast Chat</h3>
-                        <p>
-                            <strong>For you:</strong> No waiting. Watch the AI type its responses in real-time.
-                            <br />
-                            <strong>Under the hood:</strong> Custom React state architecture manages high-frequency text
-                            streaming without triggering expensive browser re-renders.
-                        </p>
-                    </div>
+                <div className="bento-grid">
+                    {features.map((feature) => (
+                        <div key={feature.id} className={`bento-card ${feature.class}`}>
+                            <div className="card-header-wrapper">
+                                <feature.icon />
+                                <h3>{feature.title}</h3>
+                            </div>
 
-                    <div className="feature-card">
-                        <div className="icon-wrapper">
-                            <IoDocumentAttachOutline />
-                        </div>
-                        <h3>Multimodal Analysis</h3>
-                        <p>
-                            <strong>For you:</strong> Upload complex images, invoices, or multi-page PDFs and get
-                            instant answers.
-                            <br />
-                            <strong>Under the hood:</strong> Securely processes document blobs and visual assets via
-                            Cloudinary, integrated directly with Gemini&apos;s vision engine.
-                        </p>
-                    </div>
 
-                    <div className="feature-card">
-                        <div className="icon-wrapper">
-                            <IoTerminalOutline />
+                            <div className="bento-details">
+                                <div className="detail-block">
+                                    <span className="badge badge-primary">Experience</span>
+                                    <p>{feature.experience}</p>
+                                </div>
+                                <div className="detail-block">
+                                    <span className="badge badge-secondary">Architecture</span>
+                                    <p>{feature.architecture}</p>
+                                </div>
+                            </div>
                         </div>
-                        <h3>Live Code Environment</h3>
-                        <p>
-                            <strong>For you:</strong> Don&apos;t just read code—run it. View interactive UI components or
-                            execute backend scripts right in the chat.
-                            <br />
-                            <strong>Under the hood:</strong> Integrates Sandpack for live frontend React rendering and
-                            the JDoodle API for secure, containerized backend code execution.
-                        </p>
-                    </div>
-
-                    <div className="feature-card">
-                        <div className="icon-wrapper">
-                            <IoColorPaletteOutline />
-                        </div>
-                        <h3>Interactive Visuals</h3>
-                        <p>
-                            <strong>For you:</strong> Plain text is boring. Get beautifully formatted syntax and live
-                            data charts.
-                            <br />
-                            <strong>Under the hood:</strong> A dynamic UI layer that parses Markdown, highlights syntax,
-                            and renders interactive Recharts data visualizations on the fly.
-                        </p>
-                    </div>
-
-                    <div className="feature-card">
-                        <div className="icon-wrapper">
-                            <IoVolumeMediumOutline />
-                        </div>
-                        <h3>Text-to-Speech Voice</h3>
-                        <p>
-                            <strong>For you:</strong> Give your eyes a rest. Click play and listen to the AI&apos;s responses
-                            in a natural voice.
-                            <br />
-                            <strong>Under the hood:</strong> Dynamically converts streamed markdown responses into
-                            seamless audio playback using advanced TTS browser APIs.
-                        </p>
-                    </div>
-
-                    <div className="feature-card">
-                        <div className="icon-wrapper">
-                            <IoShieldCheckmarkOutline />
-                        </div>
-                        <h3>Secure & Private</h3>
-                        <p>
-                            <strong>For you:</strong> Your data is safe. Jump in as a guest or securely link your social
-                            accounts.
-                            <br />
-                            <strong>Under the hood:</strong> Protected by NextAuth with stateless JWT session management
-                            and anti-enumeration security protocols.
-                        </p>
-                    </div>
+                    ))}
                 </div>
             </section>
 
