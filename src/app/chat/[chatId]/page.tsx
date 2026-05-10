@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import useAppStore from '@/store/store';
@@ -23,8 +23,51 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
     const router = useRouter();
     const { user } = useAuth();
 
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
     const chatStateRef = useRef({ currentChatId, msgCount: messages.length });
     chatStateRef.current = { currentChatId, msgCount: messages.length };
+
+    const fetchMessages = useCallback(async (pageNum: number, isLoadMore = false) => {
+        try {
+            if (!isLoadMore) {
+                cancel();
+                setMessages([]);
+            } else {
+                setIsLoadingMore(true);
+            }
+
+            const res = await getRequest<IFetchMessagesResponse & { hasMore: boolean }>(
+                `/interactions?chatId=${chatId}&page=${pageNum}&limit=5`
+            );
+
+            if (res.success && res.data) {
+                const messagesWithIds = res.data.messages.map((msg) => ({
+                    ...msg,
+                    client_id: crypto.randomUUID(),
+                }));
+
+                if (isLoadMore) {
+                    useAppStore.setState((state) => ({ messages: [...messagesWithIds, ...state.messages] }));
+                } else {
+                    setMessages(messagesWithIds);
+                    setCurrentChatId(chatId);
+                }
+                setHasMore(res.data.hasMore ?? false);
+            }
+        } catch (error) {
+            if (axios.isCancel(error) || (error instanceof Error && error.name === 'AbortError')) return;
+            if (!isLoadMore) {
+                router.push('/chat');
+                const errorMessage = error instanceof Error ? error.message : typeof error === 'string' ? error : 'Chat not found';
+                toast.error(errorMessage);
+            }
+        } finally {
+            if (isLoadMore) setIsLoadingMore(false);
+        }
+    }, [chatId, cancel, getRequest, setMessages, setCurrentChatId, router]);
 
     useEffect(() => {
         if (!chatId) return;
@@ -38,40 +81,33 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
             return;
         }
 
-        if (chatStateRef.current.currentChatId === chatId && chatStateRef.current.msgCount > 0) return;
+        if (chatStateRef.current.currentChatId !== chatId || chatStateRef.current.msgCount === 0) {
+            setPage(0);
+            setHasMore(true);
+            fetchMessages(0);
+        }
 
-        const fetchMessages = async () => {
-            try {
-                cancel();
-                setMessages([]);
-
-                const res = await getRequest<IFetchMessagesResponse>(`/interactions?chatId=${chatId}`);
-
-                if (res.success && res.data) {
-                    const messagesWithIds = res.data.messages.map((msg) => ({
-                        ...msg,
-                        client_id: crypto.randomUUID(),
-                    }));
-                    setMessages(messagesWithIds);
-                    setCurrentChatId(chatId);
-                }
-            } catch (error) {
-                if (axios.isCancel(error) || (error instanceof Error && error.name === 'AbortError')) return;
-                router.push('/chat');
-                const errorMessage =
-                    error instanceof Error ? error.message : typeof error === 'string' ? error : 'Chat not found';
-                toast.error(errorMessage);
-            }
-        };
-
-        fetchMessages();
         return () => cancel();
-    }, [chatId, setMessages, setCurrentChatId, cancel, getRequest, router]);
+    }, [chatId, fetchMessages, cancel, router]);
+
+    const handleLoadMore = () => {
+        if (!hasMore || isLoadingMore) return;
+        const nextPage = page + 1;
+        setPage(nextPage);
+        fetchMessages(nextPage, true);
+    };
 
     return (
         <div className="chatbox-main">
             <div className="chatbox-wrapper">
-                <ChatContainer user={user} isPending={isPending} chatId={chatId} />
+                <ChatContainer
+                    user={user}
+                    isPending={isPending && !isLoadingMore}
+                    chatId={chatId}
+                    onLoadMore={handleLoadMore}
+                    hasMore={hasMore}
+                    isLoadingMore={isLoadingMore}
+                />
             </div>
         </div>
     );
