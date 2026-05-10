@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import useAppStore from '@/store/store';
 import Message from '@/components/layout/main/message/Message';
 import DefaultItems from '@/components/layout/main/defaultItems/DefaultItems';
@@ -10,6 +10,9 @@ interface IChatContainerProps {
     user: any;
     isPending?: boolean;
     chatId?: string;
+    onLoadMore?: () => void;
+    hasMore?: boolean;
+    isLoadingMore?: boolean;
 }
 
 const LoadingState = () => (
@@ -18,7 +21,14 @@ const LoadingState = () => (
     </div>
 );
 
-export default function ChatContainer({ user, isPending = true, chatId }: IChatContainerProps) {
+export default function ChatContainer({
+    user,
+    isPending = true,
+    chatId,
+    onLoadMore,
+    hasMore,
+    isLoadingMore,
+}: IChatContainerProps) {
     const messages = useAppStore((state) => state.messages);
     const loading = useAppStore((state) => state.loading);
     const currentChatId = useAppStore((state) => state.currentChatId);
@@ -27,6 +37,7 @@ export default function ChatContainer({ user, isPending = true, chatId }: IChatC
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isScrolledUp = useRef(false);
     const isAutoScrolling = useRef(false);
+    const previousScrollHeightRef = useRef<number>(0);
 
     const handleScroll = () => {
         const container = scrollContainerRef.current;
@@ -34,6 +45,11 @@ export default function ChatContainer({ user, isPending = true, chatId }: IChatC
 
         const { scrollTop, scrollHeight, clientHeight } = container;
         isScrolledUp.current = scrollHeight - scrollTop - clientHeight > 100;
+
+        if (scrollTop === 0 && hasMore && !isLoadingMore && onLoadMore) {
+            previousScrollHeightRef.current = scrollHeight;
+            onLoadMore();
+        }
     };
 
     const scrollToBottom = useCallback((behavior: 'auto' | 'smooth' = 'auto') => {
@@ -52,8 +68,18 @@ export default function ChatContainer({ user, isPending = true, chatId }: IChatC
         });
     }, []);
 
+    useLayoutEffect(() => {
+        const container = scrollContainerRef.current;
+        if (container && previousScrollHeightRef.current > 0 && isScrolledUp.current) {
+            const heightDifference = container.scrollHeight - previousScrollHeightRef.current;
+            container.scrollTop = heightDifference;
+            previousScrollHeightRef.current = 0;
+        }
+    }, [messages.length]);
+
     useEffect(() => {
-        if (!isScrolledUp.current) scrollToBottom(messages.length > 0 ? 'smooth' : 'auto');
+        if (!isScrolledUp.current && previousScrollHeightRef.current === 0)
+            scrollToBottom(messages.length > 0 ? 'smooth' : 'auto');
     }, [messages.length, scrollToBottom]);
 
     const handleStreamUpdate = useCallback(() => {
@@ -80,19 +106,27 @@ export default function ChatContainer({ user, isPending = true, chatId }: IChatC
 
     return (
         <div className="result-box" ref={scrollContainerRef} onScroll={handleScroll}>
+            {isLoadingMore && (
+                <div className="pagination-loader">
+                    <Oval visible={true} height="28" width="28" color="#7081fd" secondaryColor="#7081fd" />
+                </div>
+            )}
+
             <div className="boxi">
                 {messages.map((message, index) => {
                     const isLastMessage = index === messages.length - 1;
 
-                    return <Message
-                        key={message.client_id}
-                        user={user}
-                        message={message}
-                        loading={loading}
-                        isLastMessage={isLastMessage}
-                        onStreamUpdate={handleStreamUpdate}
-                        editMessage={editMessage}
-                    />
+                    return (
+                        <Message
+                            key={message.client_id}
+                            user={user}
+                            message={message}
+                            loading={loading}
+                            isLastMessage={isLastMessage}
+                            onStreamUpdate={handleStreamUpdate}
+                            editMessage={editMessage}
+                        />
+                    );
                 })}
             </div>
         </div>
