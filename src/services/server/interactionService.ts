@@ -4,16 +4,21 @@ import { ErrorWrapper } from '@/lib/ResponseWrapper';
 import { ChatRole } from '@/types/chat';
 
 export const interactionService = {
-    async getInteractionsByChatId(chatId: string | null) {
+    async getInteractionsByChatId(chatId: string | null, page: number = 0, limit: number = 15) {
         if (!chatId || typeof chatId !== 'string') throw new ErrorWrapper(400, 'Invalid or missing chatId parameter');
 
         await connectToDB();
 
-        const interactions = await Interaction.find({ chatId }).sort({ createdAt: 1 }).lean();
+        const skip = page * limit;
 
-        if (!interactions || interactions.length === 0) throw new ErrorWrapper(404, `No chat exists for: ${chatId}`);
+        const interactions = await Interaction.find({ chatId }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
 
-        const formattedMessages = interactions.flatMap((interaction) => {
+        if ((!interactions || interactions.length === 0) && page === 1)
+            throw new ErrorWrapper(404, `No chat exists for: ${chatId}`);
+
+        const chronologicalInteractions = interactions.reverse();
+
+        const formattedMessages = chronologicalInteractions.flatMap((interaction) => {
             const userMsg: any = {
                 role: ChatRole.USER,
                 parts: [{ text: interaction.userMessage.text }],
@@ -29,6 +34,9 @@ export const interactionService = {
             return [userMsg, modelMsg];
         });
 
-        return formattedMessages;
+        const totalCount = await Interaction.countDocuments({ chatId });
+        const hasMore = totalCount > skip + interactions.length;
+
+        return { formattedMessages, hasMore };
     },
 };

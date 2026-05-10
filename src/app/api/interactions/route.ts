@@ -12,8 +12,13 @@ export const GET = apiHandler(async (request: NextRequest) => {
 
     const { searchParams } = request.nextUrl;
     const chatId = searchParams.get('chatId');
+    const page = parseInt(searchParams.get('page') || '0', 10);
+    const limit = parseInt(searchParams.get('limit') || '5', 10);
 
-    const formattedMessages = await interactionService.getInteractionsByChatId(chatId);
+    const { formattedMessages, hasMore } = await interactionService.getInteractionsByChatId(chatId, page, limit);
 
-    return ResponseWrapper.successWithData<IFetchMessagesResponse>({ messages: formattedMessages });
+    return ResponseWrapper.successWithData<IFetchMessagesResponse & { hasMore: boolean }>({
+        messages: formattedMessages,
+        hasMore,
+    });
 });
