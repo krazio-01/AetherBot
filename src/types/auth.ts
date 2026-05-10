@@ -15,7 +15,7 @@ export interface IPasswordResetRequest {
 }
 
 export interface IPasswordChangeRequest {
-    token: string;
+    token: string | null;
     newPassword: string;
 }
 

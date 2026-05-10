@@ -41,9 +41,9 @@ export const registerUser = async (data: ISignupPayload) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
     const verificationContent = verifyTemplate
-        .replace(/{{name}}/g, user.name)
+        .replace(/{{name}}/g, data.name || 'User')
         .replace(/{{FRONTEND_URL}}/g, frontendUrl)
-        .replace(/{{verifyToken}}/g, user.verifyToken);
+        .replace(/{{verifyToken}}/g, hashedToken);
 
     await sendEmail(user.email, 'Account Verification', '', verificationContent);
 };

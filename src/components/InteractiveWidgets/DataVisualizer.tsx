@@ -108,7 +108,7 @@ const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartP
                                     color: 'var(--text-clr)',
                                     borderRadius: '8px',
                                 }}
-                                formatter={(value: number, name: string) => [dataFormatter(value, name), name]}
+                                formatter={(value: any, name: any) => [dataFormatter(value, String(name)), String(name),]}
                             />
 
                             <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
@@ -140,7 +140,7 @@ const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartP
                                     color: 'var(--text-clr)',
                                     borderRadius: '8px',
                                 }}
-                                formatter={(value: number, name: string) => [dataFormatter(value, name), name]}
+                                formatter={(value: any, name: any) => [dataFormatter(value, String(name)), String(name),]}
                             />
 
                             <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />

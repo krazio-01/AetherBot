@@ -166,16 +166,20 @@ const Message = ({ user, message, loading, isLastMessage, onStreamUpdate, editMe
     }, [message?.parts]);
 
     useEffect(() => {
-        if (!message.isStreaming) {
+        if (!message.isStreaming || !message.client_id) {
             setLocalText(fullText);
             return;
         }
 
-        const unsubscribe = streamingService.subscribe(message.client_id, (newText, isDone) => {
+        const clientId = message.client_id;
+        const unsubscribe = streamingService.subscribe(clientId, (newText, isDone) => {
             setLocalText(newText);
 
             if (isLastMessage && onStreamUpdate) onStreamUpdate();
-            if (isDone) editMessage(message.client_id, { parts: [{ text: newText }], isStreaming: false });
+
+            if (isDone) {
+                editMessage(clientId, { parts: [{ text: newText }], isStreaming: false });
+            }
         });
 
         return () => unsubscribe();
@@ -334,7 +338,7 @@ export const getMarkdownComponents = (
 
 const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, role, message }: IMarkDownBlockProps) {
     const markdownComponents = useMemo(
-        () => getMarkdownComponents(handleCopyClick, message.isStreaming),
+        () => getMarkdownComponents(handleCopyClick, message.isStreaming ?? false),
         [handleCopyClick, message.isStreaming],
     );
 

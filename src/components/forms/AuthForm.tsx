@@ -11,8 +11,9 @@ interface IAuthFormProps {
     formFields: IAuthField[];
     refs: RefObject<HTMLInputElement | null>[];
     loading: boolean;
-    onSubmit: () => Promise<string>;
+    onSubmit: () => Promise<string | undefined>;
     loadingText: string;
+    successText?: string;
     redirectUrl: string;
     additionalToast?: () => void;
     submitButtonText: string;
@@ -25,6 +26,7 @@ const AuthForm = ({
     loading,
     onSubmit,
     loadingText,
+    successText = 'Success!',
     redirectUrl,
     additionalToast,
     submitButtonText,
@@ -40,12 +42,12 @@ const AuthForm = ({
                 if (additionalToast) additionalToast();
                 if (redirectUrl.includes('chat')) window.location.href = redirectUrl;
                 else router.push(redirectUrl);
-                return message;
+                return message || successText;
             }),
             {
                 loading: loadingText,
-                success: (message: string) => message,
-                error: (message: string) => message,
+                success: (message) => message as string,
+                error: (error: any) => error.message || 'Something went wrong',
             },
         );
     };

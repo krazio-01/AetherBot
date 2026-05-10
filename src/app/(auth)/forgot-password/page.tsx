@@ -28,11 +28,7 @@ const Page = () => {
         <div className="auth-layout">
             <div className="auth-visual">
                 <div className="lottie-wrapper">
-                    <DotLottieReact
-                        src="/animations/thinking.lottie"
-                        loop
-                        autoplay
-                    />
+                    <DotLottieReact src="/animations/thinking.lottie" loop autoplay />
                 </div>
             </div>
 
@@ -41,9 +37,7 @@ const Page = () => {
                     <div className="auth-form-header">
                         <MdLockReset />
                         <h2>Reset your password</h2>
-                        <p>
-                            Enter your email address and we will send you instructions to reset your password.
-                        </p>
+                        <p>Enter your email address and we will send you instructions to reset your password.</p>
                     </div>
 
                     <AuthForm

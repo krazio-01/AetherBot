@@ -4,7 +4,7 @@ import { ErrorWrapper } from '@/lib/ResponseWrapper';
 import { ChatRole } from '@/types/chat';
 
 export const interactionService = {
-    async getInteractionsByChatId(chatId: string) {
+    async getInteractionsByChatId(chatId: string | null) {
         if (!chatId || typeof chatId !== 'string') throw new ErrorWrapper(400, 'Invalid or missing chatId parameter');
 
         await connectToDB();

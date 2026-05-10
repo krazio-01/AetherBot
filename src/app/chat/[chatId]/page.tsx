@@ -56,9 +56,11 @@ const ChatPage = ({ params: { chatId } }: IChatPageProps) => {
                     setCurrentChatId(chatId);
                 }
             } catch (error) {
-                if (axios.isCancel(error) || error?.name === 'AbortError') return;
+                if (axios.isCancel(error) || (error instanceof Error && error.name === 'AbortError')) return;
                 router.push('/chat');
-                toast.error(typeof error === 'string' ? error : 'Chat not found');
+                const errorMessage =
+                    error instanceof Error ? error.message : typeof error === 'string' ? error : 'Chat not found';
+                toast.error(errorMessage);
             }
         };
 

@@ -23,7 +23,7 @@ const createChatMessage = (
 });
 
 const buildFormData = (
-    currentChatId: string | undefined,
+    currentChatId: string | null,
     input: string,
     isAuthenticated: boolean,
     messages: IMessage[],
@@ -80,7 +80,7 @@ const processStream = async (
     return fullText;
 };
 
-const sortChatToTop = (currentChatId: string | undefined) => {
+const sortChatToTop = (currentChatId: string | null) => {
     if (!currentChatId) return;
     const state = useAppStore.getState();
     const idx = state.chats.findIndex((c) => c.referenceId === currentChatId);
@@ -132,7 +132,7 @@ export const useChatSubmit = (
     }, []);
 
     const handleStreamError = useCallback(
-        (error: any, modelMessageId: string, activeChatIdOnStart: string | undefined) => {
+        (error: any, modelMessageId: string, activeChatIdOnStart: string | null) => {
             if (useAppStore.getState().currentChatId !== activeChatIdOnStart) return;
 
             const uiText = streamingService.getDisplayedText(modelMessageId);
@@ -163,7 +163,7 @@ export const useChatSubmit = (
     );
 
     const updateChat = useCallback(
-        async (currentChatId: string | undefined, newMessage: IMessage, currentInput: string) => {
+        async (currentChatId: string | null, newMessage: IMessage, currentInput: string) => {
             updateMessages(newMessage);
             sortChatToTop(currentChatId);
 
@@ -171,7 +171,7 @@ export const useChatSubmit = (
             abortControllerRef.current = new AbortController();
             const { signal } = abortControllerRef.current;
             const deps = latestDeps.current;
-            let activeChatId = currentChatId;
+            let activeChatId: string | null = currentChatId;
 
             try {
                 setIsGenerating(true);

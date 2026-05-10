@@ -43,11 +43,7 @@ const PageInner = () => {
         <div className="auth-layout">
             <div className="auth-visual">
                 <div className="lottie-wrapper">
-                    <DotLottieReact
-                        src="/animations/waiting.lottie"
-                        loop
-                        autoplay
-                    />
+                    <DotLottieReact src="/animations/waiting.lottie" loop autoplay />
                 </div>
             </div>
 
@@ -56,9 +52,7 @@ const PageInner = () => {
                     <div className="auth-form-header">
                         <MdLockReset />
                         <h2>Reset your password</h2>
-                        <p>
-                            Enter a new password below to reset your password
-                        </p>
+                        <p>Enter a new password below to reset your password</p>
                     </div>
 
                     <AuthForm
