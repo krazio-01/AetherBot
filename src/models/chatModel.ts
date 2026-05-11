@@ -4,6 +4,7 @@ export interface IChat extends Document {
     userId: string;
     referenceId: string;
     title: string;
+    isPublic: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -23,6 +24,10 @@ const chatSchema = new Schema<IChat>(
             type: String,
             required: true,
         },
+        isPublic: {
+            type: Boolean,
+            default: false
+        }
     },
     {
         timestamps: true,
