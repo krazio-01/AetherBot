@@ -29,7 +29,7 @@ const features = [
         icon: IoVolumeMediumOutline,
         title: 'Voice Synthesis',
         experience: 'Tired of reading long responses? Just hit play and let the AI read it back to you naturally.',
-        architecture: 'Uses modern Web TTS APIs to instantly parse and convert Markdown text streams into clean audio playback.',
+        architecture: 'Uses Regex-based markdown stripping, an LRU memory cache to prevent redundant API calls, and graceful native TTS failovers.',
     },
     {
         id: 'vision',
@@ -37,7 +37,7 @@ const features = [
         icon: IoDocumentAttachOutline,
         title: 'Multimodal Vision',
         experience: 'Drop in a screenshot, PDF, or receipt, and ask questions about it just like you would with a colleague.',
-        architecture: "Securely handles file blobs and uploads via Cloudinary, piping the visual data directly into Gemini's multimodal engine.",
+        architecture: "Pipes File Blobs into Gemini's multimodal engine via custom failover wrappers, maintaining full multi-turn conversational memory.",
     },
     {
         id: 'code',
