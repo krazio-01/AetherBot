@@ -12,6 +12,9 @@ export enum MediaType {
 
 export interface IFetchMessagesResponse {
     messages: IMessage[];
+    hasMore: boolean;
+    chatTitle?: string;
+    createdAt?: Date;
 }
 
 export interface IUploadFileResponse {
