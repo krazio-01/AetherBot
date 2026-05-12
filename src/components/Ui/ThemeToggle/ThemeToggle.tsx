@@ -7,9 +7,10 @@ import './themeToggle.css';
 
 interface IThemeToggleProps {
     variant?: 'button' | 'switch';
+    alwaysShow?: boolean;
 }
 
-const ThemeToggle = ({ variant = 'button' }: IThemeToggleProps) => {
+const ThemeToggle = ({ variant = 'button', alwaysShow = false }: IThemeToggleProps) => {
     const { setTheme, resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
@@ -19,7 +20,7 @@ const ThemeToggle = ({ variant = 'button' }: IThemeToggleProps) => {
         setMounted(true);
     }, []);
 
-    if (variant === 'button' && pathname !== '/') return null;
+    if (variant === 'button' && pathname !== '/' && !alwaysShow) return null;
 
     if (!mounted) {
         if (variant === 'switch') {

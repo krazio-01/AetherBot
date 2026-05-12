@@ -41,7 +41,7 @@ export interface IMessage {
     parts: IMessagePart[];
     attachment?: {
         url: string;
-        type: MediaType;
+        type: MediaType | string;
         name: string;
     };
     isError?: boolean;
