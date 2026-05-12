@@ -12,11 +12,13 @@ export const POST = apiHandler(async (request: NextRequest, { params }: { params
 
     await connectToDB();
 
-    const chat = await Chat.findOne({ referenceId: params.chatId, userId: session.user._id });
-    if (!chat) throw new ErrorWrapper(404, 'Chat not found or unauthorized');
+    const chat = await Chat.findOneAndUpdate(
+        { referenceId: params.chatId, userId: session.user._id },
+        { $set: { isPublic: true } },
+        { new: true },
+    );
 
-    chat.isPublic = true;
-    await chat.save();
+    if (!chat) throw new ErrorWrapper(404, 'Chat not found or unauthorized');
 
     return ResponseWrapper.success(200, 'Chat is now public');
 });

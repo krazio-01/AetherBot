@@ -9,6 +9,7 @@ import { FaRegShareFromSquare } from 'react-icons/fa6';
 import { toast } from 'sonner';
 import { IChat, IMenuItem } from '@/types';
 import { useRequest } from '@/hooks/useRequest';
+import ShareModal from '@/components/dialogs/ShareModal/ShareModal';
 import './chats.css';
 
 interface IChatsProps {
@@ -22,6 +23,7 @@ const Chats = ({ chat, removeChat, isActive, clearActiveChatState }: IChatsProps
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+    const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
 
     const dotsRef = useRef<HTMLButtonElement>(null);
     const router = useRouter();
@@ -72,6 +74,11 @@ const Chats = ({ chat, removeChat, isActive, clearActiveChatState }: IChatsProps
         });
     }, [chat.referenceId, deleteRequest, isActive, removeChat, router, clearActiveChatState]);
 
+    const handleShare = useCallback(() => {
+        setIsMenuOpen(false);
+        setIsShareModalOpen(true);
+    }, []);
+
     const menuItems: IMenuItem[] = useMemo(
         () => [
             {
@@ -85,9 +92,10 @@ const Chats = ({ chat, removeChat, isActive, clearActiveChatState }: IChatsProps
             {
                 icon: <FaRegShareFromSquare />,
                 content: <button type="button">Share</button>,
+                onClick: handleShare,
             },
         ],
-        [],
+        [handleShare],
     );
 
     return (
@@ -115,6 +123,14 @@ const Chats = ({ chat, removeChat, isActive, clearActiveChatState }: IChatsProps
             </Link>
 
             {isMenuOpen && <Menu position={menuPosition} onClose={() => setIsMenuOpen(false)} items={menuItems} />}
+
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                chatId={chat.referenceId}
+                shareUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/share/${chat.referenceId}`}
+                chatTitle={chat.title}
+            />
 
             {isModalOpen && (
                 <div
