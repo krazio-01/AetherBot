@@ -7,10 +7,6 @@ import { MdEmail } from 'react-icons/md';
 import { FaUser, FaUserCircle, FaLock, FaGithub, FaDiscord } from 'react-icons/fa';
 import { useRequest } from '@/hooks/useRequest';
 import AuthForm from '@/components/forms/AuthForm';
-import Avatar1 from '../../../../public/images/avatar1.jpeg';
-import Avatar2 from '../../../../public/images/avatar2.jpeg';
-import Avatar3 from '../../../../public/images/avatar3.jpeg';
-import Avatar4 from '../../../../public/images/avatar4.jpeg';
 import { IAuthField } from '@/types';
 import { ISignupRequest } from '@/types/auth';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
@@ -36,14 +32,19 @@ const Page = () => {
     const refs = [nameRef, emailRef, passwordRef];
 
     const handleRegistration = async () => {
-        const avatars = [Avatar1, Avatar2, Avatar3, Avatar4];
+        const avatars = [
+            '/images/avatar1.jpeg',
+            '/images/avatar2.jpeg',
+            '/images/avatar3.jpeg',
+            '/images/avatar4.jpeg',
+        ];
         const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
 
         const res = await postRequest<void, ISignupRequest>('/auth/signup', {
             name: nameRef.current?.value || '',
             email: emailRef.current?.value || '',
             password: passwordRef.current?.value || '',
-            avatar: randomAvatar.src,
+            avatar: randomAvatar,
         });
 
         return res?.message;

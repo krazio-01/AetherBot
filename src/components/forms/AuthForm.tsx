@@ -47,7 +47,7 @@ const AuthForm = ({
             {
                 loading: loadingText,
                 success: (message) => message as string,
-                error: (error: any) => error.message || 'Something went wrong',
+                error: (error: any) => (typeof error === 'string' ? error : 'Something went wrong'),
             },
         );
     };
