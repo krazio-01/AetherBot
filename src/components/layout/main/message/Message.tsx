@@ -343,7 +343,11 @@ const MarkDownBlock = memo(function MarkdownComponent({ part, handleCopyClick, r
     );
 
     return role === ChatRole.MODEL ? (
-        <Markdown remarkPlugins={MARKDOWN_PLUGINS} components={markdownComponents}>
+        <Markdown
+            className={message.isStreaming ? 'is-streaming' : ''}
+            remarkPlugins={MARKDOWN_PLUGINS}
+            components={markdownComponents}
+        >
             {part.text}
         </Markdown>
     ) : (

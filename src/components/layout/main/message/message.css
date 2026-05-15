@@ -54,6 +54,34 @@
         width: 100%;
         max-width: 100%;
         min-width: 0;
+
+        .is-streaming {
+            > :not(hr):last-child::after {
+                content: '';
+                display: inline-block;
+                width: 4px;
+                height: 1.1em;
+                background-color: var(--text-clr);
+                border-radius: 1px;
+                margin-left: 4px;
+                vertical-align: text-bottom;
+                animation: subtleBlink 1s ease-in-out infinite;
+            }
+
+            > p:last-child {
+                display: inline;
+            }
+        }
+    }
+}
+
+@keyframes subtleBlink {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
     }
 }
 
