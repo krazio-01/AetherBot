@@ -2,9 +2,7 @@ import connectToDB from '@/utils/dbConnect';
 import User from '@/models/userModel';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
-import path from 'path';
-import sendEmail from '@/utils/sendMail';
+import { sendEmail } from '@/utils/sendMail';
 import { ErrorWrapper } from '@/lib/ResponseWrapper';
 
 export interface ISignupPayload {
@@ -30,22 +28,18 @@ export const registerUser = async (data: ISignupPayload) => {
         password: hashedPassword,
         avatar: data.avatar,
         verifyToken: hashedToken,
-        verifyTokenExpiry: new Date(Date.now() + 3600000), // 1 hour
+        verifyTokenExpiry: new Date(Date.now() + 86400000), // 24 hours
     });
 
     const user = await newUser.save();
 
     // 4. Send Email
-    const templatePath = path.resolve(process.cwd(), 'src/templates/verificationTemplate.html');
-    const verifyTemplate = fs.readFileSync(templatePath, 'utf8');
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-    const verificationContent = verifyTemplate
-        .replace(/{{name}}/g, data.name || 'User')
-        .replace(/{{FRONTEND_URL}}/g, frontendUrl)
-        .replace(/{{verifyToken}}/g, hashedToken);
-
-    await sendEmail(user.email, 'Account Verification', '', verificationContent);
+    await sendEmail(user.email, 'Account Verification', 'verify-account.html', {
+        name: data.name || 'User',
+        verifyLink: `${frontendUrl}/verify-email?token=${hashedToken}`,
+    });
 };
 
 export const verifyUserEmail = async (token: string) => {
@@ -74,19 +68,16 @@ export const initiatePasswordReset = async (email: string) => {
     const resetToken = uuidv4();
 
     user.forgotPasswordToken = resetToken;
-    user.forgotPasswordTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+    user.forgotPasswordTokenExpiry = new Date(Date.now() + 900000); // 15 minutes
 
     await user.save({ validateBeforeSave: false });
 
-    const templatePath = path.resolve(process.cwd(), 'src/templates/forgot-password.html');
-    const passwordResetTemplate = fs.readFileSync(templatePath, 'utf8');
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
-    const passwordResetContent = passwordResetTemplate
-        .replace(/{{FRONTEND_URL}}/g, frontendUrl)
-        .replace(/{{forgotPasswordToken}}/g, resetToken);
-
-    await sendEmail(user.email, 'Change password for AetherBot', '', passwordResetContent);
+    await sendEmail(user.email, 'Change password for AetherBot', 'reset-password.html', {
+        name: user.name || 'User',
+        verifyLink: `${frontendUrl}/reset-password?token=${resetToken}`,
+    });
 
     return user.email;
 };
