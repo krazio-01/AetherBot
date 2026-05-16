@@ -7,9 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import connectToDB from '@/utils/dbConnect';
 import User from '@/models/userModel';
 import { ISessionUser } from '@/types';
-import sendEmail from '@/utils/sendMail';
-import fs from 'fs';
-import path from 'path';
+import { sendEmail } from '@/utils/sendMail';
 
 declare module 'next-auth' {
     interface Session {
@@ -52,17 +50,12 @@ export const authOptions: NextAuthOptions = {
                         user.verifyTokenExpiry = new Date(Date.now() + 86400000); // 24 hours
                         await user.save();
 
-                        const templatePath = path.resolve(process.cwd(), 'src/templates/verify-account.html');
-                        const verifyTemplate = fs.readFileSync(templatePath, 'utf8');
                         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-                        const verifyLink = `${frontendUrl}/verify-email?token=${newToken}`;
 
-                        const verificationContent = verifyTemplate
-                            .replace(/{{name}}/g, user.name || 'User')
-                            .replace(/{{verifyLink}}/g, verifyLink)
-                            .replace(/{{year}}/g, new Date().getFullYear().toString());
-
-                        await sendEmail(user.email, 'Account Verification', '', verificationContent);
+                        await sendEmail(user.email, 'Account Verification', 'verify-account.html', {
+                            name: user.name || 'User',
+                            verifyLink: `${frontendUrl}/verify-email?token=${newToken}`,
+                        });
 
                         throw new Error(
                             'Your previous verification link expired. We just sent a fresh one to your email!',
