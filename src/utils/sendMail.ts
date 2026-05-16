@@ -16,7 +16,7 @@ const deliverSmtpEmail = async (
             port: Number(process.env.EMAIL_PORT) || 465,
             secure: process.env.SECURE === 'true',
             auth: {
-                user: process.env.MAIL_USER,
+                user: process.env.USER,
                 pass: process.env.PASSWORD,
             },
         });
