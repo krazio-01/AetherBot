@@ -36,14 +36,15 @@ export const registerUser = async (data: ISignupPayload) => {
     const user = await newUser.save();
 
     // 4. Send Email
-    const templatePath = path.resolve(process.cwd(), 'src/templates/verificationTemplate.html');
+    const templatePath = path.resolve(process.cwd(), 'src/templates/verify-account.html');
     const verifyTemplate = fs.readFileSync(templatePath, 'utf8');
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const verifyLink = `${frontendUrl}/verify-email?token=${hashedToken}`;
 
     const verificationContent = verifyTemplate
         .replace(/{{name}}/g, data.name || 'User')
-        .replace(/{{FRONTEND_URL}}/g, frontendUrl)
-        .replace(/{{verifyToken}}/g, hashedToken);
+        .replace(/{{verifyLink}}/g, verifyLink)
+        .replace(/{{year}}/g, new Date().getFullYear().toString());
 
     await sendEmail(user.email, 'Account Verification', '', verificationContent);
 };
@@ -78,13 +79,15 @@ export const initiatePasswordReset = async (email: string) => {
 
     await user.save({ validateBeforeSave: false });
 
-    const templatePath = path.resolve(process.cwd(), 'src/templates/forgot-password.html');
+    const templatePath = path.resolve(process.cwd(), 'src/templates/reset-password.html');
     const passwordResetTemplate = fs.readFileSync(templatePath, 'utf8');
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     const passwordResetContent = passwordResetTemplate
-        .replace(/{{FRONTEND_URL}}/g, frontendUrl)
-        .replace(/{{forgotPasswordToken}}/g, resetToken);
+        .replace(/{{name}}/g, user.name || 'User')
+        .replace(/{{resetLink}}/g, resetLink)
+        .replace(/{{year}}/g, new Date().getFullYear().toString());
 
     await sendEmail(user.email, 'Change password for AetherBot', '', passwordResetContent);
 
