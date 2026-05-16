@@ -1,14 +1,15 @@
 import nodemailer, { Transporter, SendMailOptions } from 'nodemailer';
+import fs from 'fs';
+import path from 'path';
 
-const sendEmail = async (
-    userEmail: string | string[],
+const deliverSmtpEmail = async (
+    to: string | string[],
     subject: string,
     text: string,
     html?: string,
 ): Promise<Transporter> => {
     try {
-        if (!process.env.USER || !process.env.PASSWORD)
-            throw new Error('missing email credentials in .env');
+        if (!process.env.USER || !process.env.PASSWORD) throw new Error('Missing email credentials in .env');
 
         const transporter: Transporter = nodemailer.createTransport({
             service: process.env.SERVICE || 'gmail',
@@ -22,7 +23,7 @@ const sendEmail = async (
 
         const mail_configs: SendMailOptions = {
             from: `"AetherBot" <${process.env.USER}>`,
-            to: userEmail,
+            to: to,
             subject: subject,
             text: text,
             html: html,
@@ -36,4 +37,21 @@ const sendEmail = async (
     }
 };
 
-export default sendEmail;
+export const sendEmail = async (
+    to: string | string[],
+    subject: string,
+    templateFilename: string,
+    variables: Record<string, string>,
+) => {
+    const templatePath = path.resolve(process.cwd(), 'src/templates', templateFilename);
+    let htmlContent = fs.readFileSync(templatePath, 'utf8');
+
+    variables['year'] = new Date().getFullYear().toString();
+
+    for (const [key, value] of Object.entries(variables)) {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        htmlContent = htmlContent.replace(regex, value);
+    }
+
+    await deliverSmtpEmail(to, subject, '', htmlContent);
+};
