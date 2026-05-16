@@ -49,17 +49,18 @@ export const authOptions: NextAuthOptions = {
                     if (!user.verifyTokenExpiry || user.verifyTokenExpiry < now) {
                         const newToken = uuidv4();
                         user.verifyToken = newToken;
-                        user.verifyTokenExpiry = new Date(Date.now() + 3600000);
+                        user.verifyTokenExpiry = new Date(Date.now() + 86400000); // 24 hours
                         await user.save();
 
-                        const templatePath = path.resolve(process.cwd(), 'src/templates/verificationTemplate.html');
+                        const templatePath = path.resolve(process.cwd(), 'src/templates/verify-account.html');
                         const verifyTemplate = fs.readFileSync(templatePath, 'utf8');
                         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+                        const verifyLink = `${frontendUrl}/verify-email?token=${newToken}`;
 
                         const verificationContent = verifyTemplate
                             .replace(/{{name}}/g, user.name || 'User')
-                            .replace(/{{FRONTEND_URL}}/g, frontendUrl)
-                            .replace(/{{verifyToken}}/g, newToken);
+                            .replace(/{{verifyLink}}/g, verifyLink)
+                            .replace(/{{year}}/g, new Date().getFullYear().toString());
 
                         await sendEmail(user.email, 'Account Verification', '', verificationContent);
 

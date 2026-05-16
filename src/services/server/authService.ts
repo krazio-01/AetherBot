@@ -30,7 +30,7 @@ export const registerUser = async (data: ISignupPayload) => {
         password: hashedPassword,
         avatar: data.avatar,
         verifyToken: hashedToken,
-        verifyTokenExpiry: new Date(Date.now() + 3600000), // 1 hour
+        verifyTokenExpiry: new Date(Date.now() + 86400000), // 24 hours
     });
 
     const user = await newUser.save();
@@ -75,7 +75,7 @@ export const initiatePasswordReset = async (email: string) => {
     const resetToken = uuidv4();
 
     user.forgotPasswordToken = resetToken;
-    user.forgotPasswordTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+    user.forgotPasswordTokenExpiry = new Date(Date.now() + 900000); // 15 minutes
 
     await user.save({ validateBeforeSave: false });
 
