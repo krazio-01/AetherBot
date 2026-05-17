@@ -51,14 +51,17 @@ const getDefaultChartType = (data: IChartDataPoint[]): 'line' | 'bar' => {
 
     const firstX = String(data[0].name).toLowerCase();
     const timePatterns = [
-        /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/,
-        /^(mon|tue|wed|thu|fri|sat|sun)/,
-        /^20\d{2}$/,
-        /^q[1-4]$/,
+        /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/,
+        /(mon|tue|wed|thu|fri|sat|sun)/,
+        /20\d{2}/,
+        /q[1-4]/,
+        /day|week|month|year/,
     ];
 
     const isTimeBased = timePatterns.some((pattern) => pattern.test(firstX));
-    return isTimeBased ? 'line' : 'bar';
+    const isNumericTrend = data.every((d) => !isNaN(Number(d.name)));
+
+    return isTimeBased || isNumericTrend ? 'line' : 'bar';
 };
 
 const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartProps) => {
@@ -108,7 +111,10 @@ const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartP
                                     color: 'var(--text-clr)',
                                     borderRadius: '8px',
                                 }}
-                                formatter={(value: any, name: any) => [dataFormatter(value, String(name)), String(name),]}
+                                formatter={(value: any, name: any) => [
+                                    dataFormatter(value, String(name)),
+                                    String(name),
+                                ]}
                             />
 
                             <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
@@ -140,7 +146,10 @@ const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartP
                                     color: 'var(--text-clr)',
                                     borderRadius: '8px',
                                 }}
-                                formatter={(value: any, name: any) => [dataFormatter(value, String(name)), String(name),]}
+                                formatter={(value: any, name: any) => [
+                                    dataFormatter(value, String(name)),
+                                    String(name),
+                                ]}
                             />
 
                             <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
