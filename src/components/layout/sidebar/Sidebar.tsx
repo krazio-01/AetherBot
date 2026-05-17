@@ -25,7 +25,6 @@ const Sidebar = () => {
     const removeChat = useAppStore((state) => state.removeChat);
     const sidebarIsOpen = useAppStore((state) => state.sidebarIsOpen);
     const setMessages = useAppStore((state) => state.setMessages);
-    const setInput = useAppStore((state) => state.setInput);
 
     const { isGuest, isLoading } = useAuth();
 
@@ -100,12 +99,6 @@ const Sidebar = () => {
         fetchChats();
     }, [currentChatId, chats, isLoading, isGuest, getRequest, chatsLoading, setChats]);
 
-    const handleNewChatClick = useCallback(() => {
-        setMessages([]);
-        setInput('');
-        setCurrentChatId(null);
-    }, [setMessages, setInput, setCurrentChatId]);
-
     const menuItems: IMenuItem[] = useMemo(
         () => [
             {
@@ -121,7 +114,7 @@ const Sidebar = () => {
             <div className="sidebar-header">
                 <ToggleButton />
 
-                <Link href="/chat" onClick={handleNewChatClick} className="newchat">
+                <Link href="/chat" className="newchat">
                     <FaPlus />
                     <span>New chat</span>
                 </Link>
