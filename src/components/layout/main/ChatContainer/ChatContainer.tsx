@@ -33,6 +33,9 @@ export default function ChatContainer({
     const loading = useAppStore((state) => state.loading);
     const currentChatId = useAppStore((state) => state.currentChatId);
     const editMessage = useAppStore((state) => state.editMessage);
+    const setMessages = useAppStore((state) => state.setMessages);
+    const setCurrentChatId = useAppStore((state) => state.setCurrentChatId);
+    const setInput = useAppStore((state) => state.setInput);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isScrolledUp = useRef(false);
@@ -79,6 +82,14 @@ export default function ChatContainer({
             previousScrollHeightRef.current = 0;
         }
     }, [messages.length]);
+
+    useEffect(() => {
+        if (!chatId) {
+            setMessages([]);
+            setInput('');
+            setCurrentChatId(null);
+        }
+    }, [chatId, setMessages, setInput, setCurrentChatId]);
 
     useEffect(() => {
         if (previousScrollHeightRef.current === 0) {
