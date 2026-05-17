@@ -33,27 +33,33 @@ export default function ChatContainer({
     const loading = useAppStore((state) => state.loading);
     const currentChatId = useAppStore((state) => state.currentChatId);
     const editMessage = useAppStore((state) => state.editMessage);
+    const setMessages = useAppStore((state) => state.setMessages);
+    const setCurrentChatId = useAppStore((state) => state.setCurrentChatId);
+    const setInput = useAppStore((state) => state.setInput);
 
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const isScrolledUp = useRef(false);
+    const messageListContainerRef = useRef<HTMLDivElement>(null);
+    const hasUserScrolledUp = useRef(false);
     const isAutoScrolling = useRef(false);
-    const previousScrollHeightRef = useRef<number>(0);
+    const prePaginationScrollHeightRef = useRef<number>(0);
 
-    const handleScroll = () => {
-        const container = scrollContainerRef.current;
-        if (!container || isAutoScrolling.current) return;
+    const handleScroll = useCallback(() => {
+        const container = messageListContainerRef.current;
+        if (!container) return;
 
         const { scrollTop, scrollHeight, clientHeight } = container;
-        isScrolledUp.current = scrollHeight - scrollTop - clientHeight > 100;
+
+        hasUserScrolledUp.current = scrollHeight - scrollTop - clientHeight > 30;
+
+        if (isAutoScrolling.current) return;
 
         if (scrollTop === 0 && hasMore && !isLoadingMore && onLoadMore) {
-            previousScrollHeightRef.current = scrollHeight;
+            prePaginationScrollHeightRef.current = scrollHeight;
             onLoadMore();
         }
-    };
+    }, [hasMore, isLoadingMore, onLoadMore]);
 
     const scrollToBottom = useCallback((behavior: 'auto' | 'smooth' = 'auto') => {
-        const container = scrollContainerRef.current;
+        const container = messageListContainerRef.current;
         if (!container) return;
 
         isAutoScrolling.current = true;
@@ -69,21 +75,31 @@ export default function ChatContainer({
     }, []);
 
     useLayoutEffect(() => {
-        const container = scrollContainerRef.current;
-        if (container && previousScrollHeightRef.current > 0 && isScrolledUp.current) {
-            const heightDifference = container.scrollHeight - previousScrollHeightRef.current;
-            container.scrollTop = heightDifference;
-            previousScrollHeightRef.current = 0;
-        }
-    }, [messages.length]);
+        const container = messageListContainerRef.current;
+        if (!container) return;
 
-    useEffect(() => {
-        if (!isScrolledUp.current && previousScrollHeightRef.current === 0)
+        if (prePaginationScrollHeightRef.current > 0) {
+            if (hasUserScrolledUp.current) {
+                const heightDifference = container.scrollHeight - prePaginationScrollHeightRef.current;
+                container.scrollTop = heightDifference;
+            }
+            prePaginationScrollHeightRef.current = 0;
+        } else {
+            hasUserScrolledUp.current = false;
             scrollToBottom(messages.length > 0 ? 'smooth' : 'auto');
+        }
     }, [messages.length, scrollToBottom]);
 
+    useEffect(() => {
+        if (!chatId) {
+            setMessages([]);
+            setInput('');
+            setCurrentChatId(null);
+        }
+    }, [chatId, setMessages, setInput, setCurrentChatId]);
+
     const handleStreamUpdate = useCallback(() => {
-        if (!isScrolledUp.current) scrollToBottom('auto');
+        if (!hasUserScrolledUp.current) scrollToBottom('auto');
     }, [scrollToBottom]);
 
     if (isPending) return <LoadingState />;
@@ -105,7 +121,7 @@ export default function ChatContainer({
     }
 
     return (
-        <div className="result-box" ref={scrollContainerRef} onScroll={handleScroll}>
+        <div className="result-box" ref={messageListContainerRef} onScroll={handleScroll}>
             {isLoadingMore && (
                 <div className="pagination-loader">
                     <Oval visible={true} height="28" width="28" color="#7081fd" secondaryColor="#7081fd" />
@@ -121,7 +137,7 @@ export default function ChatContainer({
                             key={message.client_id}
                             user={user}
                             message={message}
-                            loading={loading}
+                            loading={isLastMessage ? loading : false}
                             isLastMessage={isLastMessage}
                             onStreamUpdate={handleStreamUpdate}
                             editMessage={editMessage}

@@ -268,7 +268,7 @@ const Message = ({ user, message, loading, isLastMessage, onStreamUpdate, editMe
                 </div>
             </div>
 
-            {loading && message.role === ChatRole.USER && (
+            {loading && isLastMessage && message.role === ChatRole.USER && (
                 <div className="message-model">
                     <Image
                         src={LogoImage as StaticImageData}

@@ -76,7 +76,7 @@ export const initiatePasswordReset = async (email: string) => {
 
     await sendEmail(user.email, 'Change password for AetherBot', 'reset-password.html', {
         name: user.name || 'User',
-        verifyLink: `${frontendUrl}/reset-password?token=${resetToken}`,
+        resetLink: `${frontendUrl}/reset-password?token=${resetToken}`,
     });
 
     return user.email;
