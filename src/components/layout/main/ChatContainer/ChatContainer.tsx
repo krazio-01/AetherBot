@@ -79,9 +79,17 @@ export default function ChatContainer({
         if (container && previousScrollHeightRef.current > 0 && isScrolledUp.current) {
             const heightDifference = container.scrollHeight - previousScrollHeightRef.current;
             container.scrollTop = heightDifference;
-            previousScrollHeightRef.current = 0;
         }
     }, [messages.length]);
+
+    useEffect(() => {
+        if (previousScrollHeightRef.current > 0) {
+            previousScrollHeightRef.current = 0;
+        } else {
+            isScrolledUp.current = false;
+            scrollToBottom(messages.length > 0 ? 'smooth' : 'auto');
+        }
+    }, [messages.length, scrollToBottom]);
 
     useEffect(() => {
         if (!chatId) {
@@ -90,13 +98,6 @@ export default function ChatContainer({
             setCurrentChatId(null);
         }
     }, [chatId, setMessages, setInput, setCurrentChatId]);
-
-    useEffect(() => {
-        if (previousScrollHeightRef.current === 0) {
-            isScrolledUp.current = false;
-            scrollToBottom(messages.length > 0 ? 'smooth' : 'auto');
-        }
-    }, [messages.length, scrollToBottom]);
 
     const handleStreamUpdate = useCallback(() => {
         if (!isScrolledUp.current) scrollToBottom('auto');
