@@ -41,10 +41,13 @@ export default function ChatContainer({
 
     const handleScroll = () => {
         const container = scrollContainerRef.current;
-        if (!container || isAutoScrolling.current) return;
+        if (!container) return;
 
         const { scrollTop, scrollHeight, clientHeight } = container;
-        isScrolledUp.current = scrollHeight - scrollTop - clientHeight > 100;
+
+        isScrolledUp.current = scrollHeight - scrollTop - clientHeight > 30;
+
+        if (isAutoScrolling.current) return;
 
         if (scrollTop === 0 && hasMore && !isLoadingMore && onLoadMore) {
             previousScrollHeightRef.current = scrollHeight;
@@ -78,8 +81,10 @@ export default function ChatContainer({
     }, [messages.length]);
 
     useEffect(() => {
-        if (!isScrolledUp.current && previousScrollHeightRef.current === 0)
+        if (previousScrollHeightRef.current === 0) {
+            isScrolledUp.current = false;
             scrollToBottom(messages.length > 0 ? 'smooth' : 'auto');
+        }
     }, [messages.length, scrollToBottom]);
 
     const handleStreamUpdate = useCallback(() => {
