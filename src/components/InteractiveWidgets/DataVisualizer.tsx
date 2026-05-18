@@ -25,7 +25,12 @@ interface ILiveChartProps {
     colors?: string[];
 }
 
-const DEFAULT_COLORS = ['#7081fd', '#e93939', '#2ecc71', '#f1c40f'];
+const DEFAULT_COLORS = [
+    'var(--chart-color-1, #7081fd)',
+    'var(--chart-color-2, #0ea5e9)',
+    'var(--chart-color-3, #10b981)',
+    'var(--chart-color-4, #f59e0b)',
+];
 
 const dataFormatter = (value: number | string, keyName?: string): string => {
     const numValue = Number(value);
