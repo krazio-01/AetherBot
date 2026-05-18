@@ -31,6 +31,10 @@
     --fill-muted: rgba(0, 0, 0, 0.1);
     --fill-strong: rgba(0, 0, 0, 0.2);
     --code-block-header: var(--bg-glass);
+    --chart-color-1: #000000;
+    --chart-color-2: #525252;
+    --chart-color-3: #8b8b8b;
+    --chart-color-4: #c4c4c4;
 }
 
 [data-theme='dark'] {
@@ -54,6 +58,10 @@
     --fill-muted: rgba(255, 255, 255, 0.1);
     --fill-strong: rgba(255, 255, 255, 0.2);
     --code-block-header: var(--light-text-clr);
+    --chart-color-1: #818cf8;
+    --chart-color-2: #e5e7eb;
+    --chart-color-3: #9ca3af;
+    --chart-color-4: #4b5563;
 }
 
 * {
