@@ -74,7 +74,14 @@ const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartP
 
     if (!data || data.length === 0) return <div className="response-error">Invalid chart data provided.</div>;
 
-    const dynamicTitle = dataKeys.length > 0 ? dataKeys.join(' vs ') : 'Data Overview';
+    const formatKey = (key: string) => key.replace(/_/g, ' ');
+
+    const dynamicTitle =
+        dataKeys.length > 0
+            ? dataKeys.length > 2
+                ? `${formatKey(dataKeys[0])} vs ${formatKey(dataKeys[1])} & more`
+                : dataKeys.map(formatKey).join(' vs ')
+            : 'Data Overview';
 
     const commonAxisProps = {
         stroke: 'var(--light-text-clr)',
@@ -84,7 +91,20 @@ const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartP
     return (
         <div className="chart-widget">
             <div className="chart-header">
-                <span style={{ textTransform: 'capitalize', letterSpacing: '0.5px' }}>{dynamicTitle}</span>
+                <span
+                    title={dataKeys.map(formatKey).join(' vs ')}
+                    style={{
+                        textTransform: 'capitalize',
+                        letterSpacing: '0.5px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        flex: 1,
+                        marginRight: '16px',
+                    }}
+                >
+                    {dynamicTitle}
+                </span>
                 <div className="chart-select-wrapper">
                     <select
                         value={chartType}
