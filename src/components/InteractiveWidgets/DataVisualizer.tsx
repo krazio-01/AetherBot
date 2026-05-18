@@ -25,7 +25,12 @@ interface ILiveChartProps {
     colors?: string[];
 }
 
-const DEFAULT_COLORS = ['#7081fd', '#e93939', '#2ecc71', '#f1c40f'];
+const DEFAULT_COLORS = [
+    'var(--chart-color-1, #7081fd)',
+    'var(--chart-color-2, #0ea5e9)',
+    'var(--chart-color-3, #10b981)',
+    'var(--chart-color-4, #f59e0b)',
+];
 
 const dataFormatter = (value: number | string, keyName?: string): string => {
     const numValue = Number(value);
@@ -69,7 +74,14 @@ const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartP
 
     if (!data || data.length === 0) return <div className="response-error">Invalid chart data provided.</div>;
 
-    const dynamicTitle = dataKeys.length > 0 ? dataKeys.join(' vs ') : 'Data Overview';
+    const formatKey = (key: string) => key.replace(/_/g, ' ');
+
+    const dynamicTitle =
+        dataKeys.length > 0
+            ? dataKeys.length > 2
+                ? `${formatKey(dataKeys[0])} vs ${formatKey(dataKeys[1])} & more`
+                : dataKeys.map(formatKey).join(' vs ')
+            : 'Data Overview';
 
     const commonAxisProps = {
         stroke: 'var(--light-text-clr)',
@@ -79,7 +91,20 @@ const DataVisualizer = ({ data, dataKeys, colors = DEFAULT_COLORS }: ILiveChartP
     return (
         <div className="chart-widget">
             <div className="chart-header">
-                <span style={{ textTransform: 'capitalize', letterSpacing: '0.5px' }}>{dynamicTitle}</span>
+                <span
+                    title={dataKeys.map(formatKey).join(' vs ')}
+                    style={{
+                        textTransform: 'capitalize',
+                        letterSpacing: '0.5px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        flex: 1,
+                        marginRight: '16px',
+                    }}
+                >
+                    {dynamicTitle}
+                </span>
                 <div className="chart-select-wrapper">
                     <select
                         value={chartType}
