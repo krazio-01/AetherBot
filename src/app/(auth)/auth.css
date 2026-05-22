@@ -81,6 +81,33 @@
                     color: var(--light-text-clr);
                     font-size: 0.95rem;
                 }
+
+                &.success-state {
+                    padding-block: 2rem;
+
+                    .success-icon {
+                        font-size: 3.5rem;
+                        margin-bottom: 1rem;
+                    }
+
+                    .success-message {
+                        text-align: center;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
+
+                        .email-highlight {
+                            color: var(--text-clr);
+                            font-weight: 600;
+                        }
+                    }
+
+                    .spam-notice {
+                        text-align: center;
+                        margin-top: 1rem;
+                        font-size: 0.85rem;
+                    }
+                }
             }
 
             /* other providers css */
@@ -170,6 +197,14 @@
                         color: #c084fc;
                         text-decoration: underline;
                     }
+                }
+
+                &.return-footer {
+                    margin-top: 1rem;
+                }
+
+                &.success-footer {
+                    margin-top: 2rem;
                 }
             }
         }
