@@ -14,7 +14,7 @@ interface IAuthFormProps {
     onSubmit: () => Promise<string | undefined>;
     loadingText: string;
     successText?: string;
-    redirectUrl: string;
+    redirectUrl?: string;
     additionalToast?: () => void;
     submitButtonText: string;
     forgotPassword?: boolean;
@@ -40,8 +40,10 @@ const AuthForm = ({
         toast.promise(
             onSubmit().then((message) => {
                 if (additionalToast) additionalToast();
-                if (redirectUrl.includes('chat')) window.location.href = redirectUrl;
-                else router.push(redirectUrl);
+                if (redirectUrl) {
+                    if (redirectUrl.includes('chat')) window.location.href = redirectUrl;
+                    else router.push(redirectUrl);
+                }
                 return message || successText;
             }),
             {
