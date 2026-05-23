@@ -2,32 +2,21 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-const PUBLIC_PATHS = new Set<string>([
-    '/',
-    '/login',
-    '/register',
-    '/verifyEmail',
-    '/forgot-password',
-    '/reset-password',
-]);
-const PROTECTED_PATHS: string[] = [];
+const PUBLIC_PATHS = new Set(['/', '/login', '/register', '/verify-email', '/forgot-password', '/reset-password']);
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
-    const token = await getToken({ req: request });
     const { pathname, searchParams } = request.nextUrl;
-    const tokenParams = searchParams.get('token');
 
-    const isPublicPath = PUBLIC_PATHS.has(pathname);
-    const isProtectedPath = PROTECTED_PATHS.some((protectedPath) => pathname.startsWith(protectedPath));
-
-    if (pathname.startsWith('/reset-password') && !tokenParams)
+    if (pathname === '/reset-password' && !searchParams.has('token'))
         return NextResponse.redirect(new URL('/', request.url));
 
+    const isPublicPath = PUBLIC_PATHS.has(pathname);
+    const token = await getToken({ req: request });
+
     if (token) {
-        if (isPublicPath || pathname.startsWith('/reset-password'))
-            return NextResponse.redirect(new URL('/chat', request.url));
+        if (isPublicPath) return NextResponse.redirect(new URL('/chat', request.url));
     } else {
-        if (isProtectedPath) return NextResponse.redirect(new URL('/', request.url));
+        if (!isPublicPath) return NextResponse.redirect(new URL('/', request.url));
     }
 
     return NextResponse.next();
@@ -40,7 +29,7 @@ export const config = {
         '/chat/:chatId*',
         '/login',
         '/register',
-        '/verifyEmail',
+        '/verify-email',
         '/forgot-password',
         '/reset-password',
     ],
