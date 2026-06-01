@@ -12,7 +12,7 @@ import '../auth.css';
 const Page = () => {
     const { postRequest, isPending } = useRequest();
 
-    const [isSubmitted, setIsSubmitted] = useState(true);
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
     const emailRef = useRef<HTMLInputElement>(null);
     const refs = [emailRef];
