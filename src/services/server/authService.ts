@@ -63,7 +63,7 @@ export const initiatePasswordReset = async (email: string) => {
     await connectToDB();
 
     const user = await User.findOne({ email });
-    if (!user) throw new ErrorWrapper(404, 'User not found');
+    if (!user) return;
 
     const PASSWORD_RESET_TTL = 900000; // 15 min
     const PASSWORD_RESET_COOLDOWN = 60000; // 1 min
@@ -91,8 +91,6 @@ export const initiatePasswordReset = async (email: string) => {
         name: user.name || 'User',
         resetLink: `${frontendUrl}/reset-password?token=${resetToken}`,
     });
-
-    return user.email;
 };
 
 export const executePasswordReset = async (token: string, newPassword: string) => {
