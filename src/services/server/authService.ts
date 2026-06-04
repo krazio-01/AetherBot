@@ -63,12 +63,25 @@ export const initiatePasswordReset = async (email: string) => {
     await connectToDB();
 
     const user = await User.findOne({ email });
-    if (!user) throw new ErrorWrapper(404, 'User not found');
+    if (!user) return;
+
+    const PASSWORD_RESET_TTL = 900000; // 15 min
+    const PASSWORD_RESET_COOLDOWN = 60000; // 1 min
+
+    if (user.forgotPasswordTokenExpiry && user.forgotPasswordTokenExpiry.getTime() > Date.now()) {
+        const timeRemaining = user.forgotPasswordTokenExpiry.getTime() - Date.now();
+        const timePassed = PASSWORD_RESET_TTL - timeRemaining;
+
+        if (timePassed < PASSWORD_RESET_COOLDOWN) {
+            const waitTime = Math.ceil((PASSWORD_RESET_COOLDOWN - timePassed) / 1000);
+            throw new ErrorWrapper(429, `Please wait ${waitTime} seconds before requesting another link.`);
+        }
+    }
 
     const resetToken = uuidv4();
 
     user.forgotPasswordToken = resetToken;
-    user.forgotPasswordTokenExpiry = new Date(Date.now() + 900000); // 15 minutes
+    user.forgotPasswordTokenExpiry = new Date(Date.now() + PASSWORD_RESET_TTL);
 
     await user.save({ validateBeforeSave: false });
 
@@ -78,8 +91,6 @@ export const initiatePasswordReset = async (email: string) => {
         name: user.name || 'User',
         resetLink: `${frontendUrl}/reset-password?token=${resetToken}`,
     });
-
-    return user.email;
 };
 
 export const executePasswordReset = async (token: string, newPassword: string) => {

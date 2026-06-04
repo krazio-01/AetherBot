@@ -13,7 +13,7 @@ export const POST = apiHandler(async (request: NextRequest) => {
 
     if (!email) throw new ErrorWrapper(400, 'Email is required');
 
-    const userEmail = await initiatePasswordReset(email);
+    await initiatePasswordReset(email);
 
-    return ResponseWrapper.success(200, `An email has been sent to ${userEmail}`);
+    return ResponseWrapper.success(200, 'If this email is registered, a reset link has been sent.');
 });
