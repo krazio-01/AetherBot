@@ -7,7 +7,7 @@
 
 <img width="1920" height="1081" alt="Screenshot from 2026-05-23 13-13-32" src="https://github.com/user-attachments/assets/9cd5b975-3432-4740-bab4-bf6711d8b438" />
 
-## Live Demo 🌐
+## Live Demo 🚀
 Check out the live demo of the application [here](https://aether-bot.vercel.app/).
 
 ---
